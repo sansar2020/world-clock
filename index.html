@@ -1,0 +1,2380 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Radium World-Clock Studio & Widget Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Space Grotesk', 'sans-serif'],
+            mono: ['Orbitron', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.25); border-radius: 99px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.45); }
+
+    /* Scoped Radium Clock Preview Tokens */
+    #previewRoot {
+      --rw-bg: radial-gradient(circle at 50% 35%, #f1f5f9 0%, #e2e8f0 60%, #cbd5e1 100%);
+      --rw-card-bg: rgba(255, 255, 255, 0.85);
+      --rw-card-border: rgba(15, 23, 42, 0.12);
+      --rw-card-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.14), inset 0 1px 2px rgba(255, 255, 255, 0.9);
+      --rw-bezel-bg: linear-gradient(145deg, #e2e8f0 0%, #cbd5e1 100%);
+      --rw-bezel-border: rgba(15, 23, 42, 0.16);
+      --rw-dial-bg: radial-gradient(circle at 45% 40%, #ffffff 0%, #f1f5f9 75%, #e2e8f0 100%);
+      --rw-dial-shadow: inset 0 6px 14px rgba(15, 23, 42, 0.12), 0 8px 20px rgba(15, 23, 42, 0.08);
+      --rw-subdial-bg: radial-gradient(circle, #f8fafc 0%, #e2e8f0 100%);
+      --rw-text: #0f172a;
+      --rw-muted: #64748b;
+      --rw-tick-minor: rgba(15, 23, 42, 0.25);
+      --rw-hand-casing: #1e293b;
+      --rw-radium: #10b981;
+      --rw-radium-glow: rgba(16, 185, 129, 0.55);
+      --rw-accent: #0284c7;
+      --rw-accent-glow: rgba(2, 132, 199, 0.45);
+      --rw-pill-bg: rgba(15, 23, 42, 0.06);
+      --rw-circle-bg: #0f172a;
+      --rw-circle-text: #ffffff;
+      background: var(--rw-bg);
+      color: var(--rw-text);
+      transition: background 0.4s ease, color 0.3s ease;
+    }
+
+    #previewRoot.rw-dark {
+      --rw-bg: radial-gradient(circle at 50% 35%, #131a29 0%, #070b12 60%, #020306 100%);
+      --rw-card-bg: rgba(18, 26, 38, 0.82);
+      --rw-card-border: rgba(255, 255, 255, 0.1);
+      --rw-card-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.85), inset 0 1px 1.5px rgba(255, 255, 255, 0.16);
+      --rw-bezel-bg: linear-gradient(145deg, #1e293b 0%, #090d14 100%);
+      --rw-bezel-border: rgba(56, 189, 248, 0.35);
+      --rw-dial-bg: radial-gradient(circle at 45% 40%, #1a2232 0%, #0d121c 75%, #070a10 100%);
+      --rw-dial-shadow: inset 0 10px 22px rgba(0, 0, 0, 0.85), 0 0 28px rgba(0, 0, 0, 0.6);
+      --rw-subdial-bg: radial-gradient(circle, #0d131f 0%, #161f30 100%);
+      --rw-text: #f8fafc;
+      --rw-muted: #94a3b8;
+      --rw-tick-minor: rgba(255, 255, 255, 0.22);
+      --rw-hand-casing: #090d14;
+      --rw-radium: #34d399;
+      --rw-radium-glow: rgba(52, 211, 153, 0.8);
+      --rw-accent: #38bdf8;
+      --rw-accent-glow: rgba(56, 189, 248, 0.8);
+      --rw-pill-bg: rgba(255, 255, 255, 0.06);
+      --rw-circle-bg: #38bdf8;
+      --rw-circle-text: #06111a;
+    }
+
+    /* Bezel Finishes */
+    #previewRoot[data-bezel="gold"] {
+      --rw-bezel-bg: linear-gradient(145deg, #785a28 0%, #2c200d 55%, #8c6a30 100%);
+      --rw-bezel-border: rgba(251, 191, 36, 0.5);
+    }
+    #previewRoot[data-bezel="titanium"] {
+      --rw-bezel-bg: linear-gradient(145deg, #64748b 0%, #334155 50%, #475569 100%);
+      --rw-bezel-border: rgba(226, 232, 240, 0.45);
+    }
+    #previewRoot[data-bezel="emerald"] {
+      --rw-bezel-bg: linear-gradient(145deg, #064e3b 0%, #022c22 60%, #065f46 100%);
+      --rw-bezel-border: rgba(52, 211, 153, 0.45);
+    }
+
+    /* Individual Clock Card */
+    .rw-card {
+      position: relative;
+      background: var(--rw-card-bg);
+      backdrop-filter: blur(22px) saturate(160%);
+      -webkit-backdrop-filter: blur(22px) saturate(160%);
+      border: 1px solid var(--rw-card-border);
+      border-radius: 28px;
+      padding: 20px 16px 18px;
+      box-shadow: var(--rw-card-shadow);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.4s ease;
+    }
+    .rw-card:hover {
+      transform: translateY(-3px);
+    }
+    .rw-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 24%;
+      right: 24%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--rw-radium), var(--rw-accent), transparent);
+      border-radius: 99px;
+    }
+
+    /* 224px Watch Assembly */
+    .rw-bezel {
+      position: relative;
+      width: 224px;
+      height: 224px;
+      border-radius: 50%;
+      background: var(--rw-bezel-bg);
+      padding: 12px;
+      border: 1.5px solid var(--rw-bezel-border);
+      box-shadow: 0 14px 28px -6px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.22);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 12px 0 14px;
+    }
+    .rw-bezel-ring {
+      position: absolute;
+      inset: 3px;
+      border-radius: 50%;
+      border: 1px dashed var(--rw-bezel-border);
+      opacity: 0.7;
+      pointer-events: none;
+    }
+    .rw-dial {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: var(--rw-dial-bg);
+      border: 1.5px solid var(--rw-card-border);
+      box-shadow: var(--rw-dial-shadow);
+      overflow: hidden;
+    }
+
+    /* 60 Graduations */
+    .rw-ticks { position: absolute; inset: 0; border-radius: 50%; }
+    .rw-tick {
+      position: absolute;
+      top: 6px;
+      left: 50%;
+      width: 1.5px;
+      height: 5px;
+      background: var(--rw-tick-minor);
+      transform-origin: 50% 92px;
+      margin-left: -0.75px;
+    }
+    .rw-tick.major {
+      width: 3.5px;
+      height: 11px;
+      background: var(--rw-radium);
+      margin-left: -1.75px;
+      border-radius: 2px;
+      box-shadow: 0 0 7px var(--rw-radium-glow);
+    }
+    .rw-tick.cardinal {
+      width: 5px;
+      height: 13px;
+      margin-left: -2.5px;
+      background: var(--rw-radium);
+      box-shadow: 0 0 10px var(--rw-radium-glow), 0 0 18px var(--rw-radium-glow);
+    }
+
+    /* Dial Brand */
+    .rw-dial-brand {
+      position: absolute;
+      top: 36px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.56rem;
+      font-weight: 700;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+      color: var(--rw-muted);
+      white-space: nowrap;
+      max-width: 110px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      z-index: 2;
+    }
+    .rw-dial-brand span { color: var(--rw-accent); }
+
+    /* Sub-dials */
+    .rw-subdial {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--rw-subdial-bg);
+      border: 1px solid var(--rw-bezel-border);
+      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      transition: opacity 0.25s ease;
+    }
+    .rw-subdial.left { left: 22px; }
+    .rw-subdial.right { right: 22px; }
+    .rw-subdial::before {
+      content: '';
+      position: absolute;
+      inset: 3px;
+      border-radius: 50%;
+      border: 1px dashed var(--rw-tick-minor);
+    }
+    .rw-sub-label {
+      position: absolute;
+      bottom: 7px;
+      font-family: 'Orbitron', monospace;
+      font-size: 0.38rem;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      color: var(--rw-muted);
+    }
+    .rw-sub-needle {
+      position: absolute;
+      bottom: 50%;
+      left: 50%;
+      width: 1.8px;
+      height: 14px;
+      margin-left: -0.9px;
+      background: var(--rw-accent);
+      border-radius: 2px;
+      transform-origin: 50% 100%;
+      box-shadow: 0 0 5px var(--rw-accent-glow);
+    }
+    .rw-subdial.right .rw-sub-needle {
+      background: var(--rw-radium);
+      box-shadow: 0 0 5px var(--rw-radium-glow);
+    }
+    .rw-sub-pin {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--rw-text);
+      z-index: 2;
+    }
+
+    /* Main Hands */
+    .rw-needle {
+      position: absolute;
+      bottom: 50%;
+      left: 50%;
+      transform-origin: 50% 100%;
+      pointer-events: none;
+    }
+    .rw-needle.hour {
+      width: 7px;
+      height: 48px;
+      margin-left: -3.5px;
+      background: var(--rw-hand-casing);
+      border-radius: 5px;
+      padding: 2.5px 1.8px;
+      display: flex;
+      justify-content: center;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45);
+      z-index: 3;
+    }
+    .rw-needle.hour::after {
+      content: '';
+      width: 100%;
+      height: 82%;
+      background: var(--rw-radium);
+      border-radius: 3px;
+      box-shadow: 0 0 8px var(--rw-radium-glow), 0 0 16px var(--rw-radium-glow);
+    }
+    .rw-needle.minute {
+      width: 5px;
+      height: 70px;
+      margin-left: -2.5px;
+      background: var(--rw-hand-casing);
+      border-radius: 5px;
+      padding: 2.5px 1.2px;
+      display: flex;
+      justify-content: center;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.45);
+      z-index: 4;
+    }
+    .rw-needle.minute::after {
+      content: '';
+      width: 100%;
+      height: 86%;
+      background: var(--rw-radium);
+      border-radius: 3px;
+      box-shadow: 0 0 10px var(--rw-radium-glow), 0 0 20px var(--rw-radium-glow);
+    }
+    .rw-needle.second {
+      width: 2px;
+      height: 92px;
+      margin-left: -1px;
+      bottom: calc(50% - 16px);
+      transform-origin: 50% 76px;
+      background: var(--rw-accent);
+      box-shadow: 0 0 7px var(--rw-accent-glow);
+      z-index: 5;
+    }
+    .rw-needle.second::before {
+      content: '';
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4.5px;
+      height: 4.5px;
+      border-radius: 50%;
+      background: var(--rw-radium);
+      box-shadow: 0 0 8px var(--rw-radium-glow);
+    }
+    .rw-needle.second::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 3.5px;
+      height: 13px;
+      background: var(--rw-accent);
+      border-radius: 2px;
+    }
+    .rw-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--rw-accent);
+      border: 2px solid var(--rw-hand-casing);
+      box-shadow: 0 0 10px var(--rw-accent-glow);
+      z-index: 6;
+    }
+    .rw-center::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 3.5px;
+      height: 3.5px;
+      border-radius: 50%;
+      background: var(--rw-radium);
+    }
+
+    /* Digital Readout & Pills */
+    .rw-time {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.55rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: var(--rw-text);
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      margin-bottom: 6px;
+      line-height: 1.1;
+    }
+    .rw-time.has-sec { font-size: 1.32rem; }
+    .rw-time .ampm {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--rw-accent);
+      padding: 2px 6px;
+      border-radius: 5px;
+      background: var(--rw-pill-bg);
+    }
+    .rw-date {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.9px;
+      text-transform: uppercase;
+      color: var(--rw-muted);
+      padding: 4px 10px;
+      border-radius: 99px;
+      background: var(--rw-pill-bg);
+    }
+    .rw-date .circle {
+      background-color: var(--rw-circle-bg);
+      color: var(--rw-circle-text);
+      border-radius: 50%;
+      height: 18px;
+      width: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.64rem;
+      font-weight: 800;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col lg:flex-row overflow-x-hidden">
+
+  <!-- LEFT PANEL: STUDIO CUSTOMIZER SIDEBAR -->
+  <aside class="w-full lg:w-[410px] xl:w-[440px] shrink-0 bg-slate-900/95 border-b lg:border-b-0 lg:border-r border-slate-800 flex flex-col lg:h-screen lg:sticky lg:top-0 z-20">
+    <!-- Top Header -->
+    <div class="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-sky-500 flex items-center justify-center text-slate-950 font-display font-extrabold text-lg shadow-lg shadow-emerald-500/20">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="font-display font-bold text-base tracking-tight text-white">Radium World-Clock Studio</h1>
+          <p class="text-xs text-slate-400">1–8 Clocks • Open/Close Timers • 1-Click HTML</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <button id="openHelpGuideBtn" type="button" title="Read User Guide, Use Cases & Download Manual" class="text-xs px-2.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/35 font-semibold flex items-center gap-1 transition cursor-pointer">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span>Guide</span>
+        </button>
+        <button id="resetDefaultsBtn" type="button" title="Reset to Defaults" class="text-xs px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition cursor-pointer">
+          Reset
+        </button>
+      </div>
+    </div>
+
+    <!-- Scrollable Controls -->
+    <div class="p-4 sm:p-5 space-y-6 overflow-y-auto flex-1">
+
+      <!-- Section 1: Brand & Text Identity -->
+      <div class="space-y-3">
+        <div class="flex items-center gap-2 text-xs font-display font-bold uppercase tracking-wider text-emerald-400">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          <span>1. Brand & Live Headline</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Dial Brand Name</label>
+            <input id="brandNameInput" type="text" maxlength="16" value="WORLD SATHI" placeholder="YOUR BRAND"
+              class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700/80 text-sm text-white focus:outline-none focus:border-emerald-400 transition" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Section Headline</label>
+            <input id="headerTitleInput" type="text" maxlength="44" value="Global Operations & Live Time"
+              class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700/80 text-sm text-white focus:outline-none focus:border-emerald-400 transition" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Live Broadcast / Community Notice</label>
+          <input id="liveNoticeInput" type="text" maxlength="75" value="Live Stream & Support Active • Next Event 7:00 PM IST"
+            class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700/80 text-sm text-white focus:outline-none focus:border-emerald-400 transition" />
+        </div>
+      </div>
+
+      <hr class="border-slate-800/80" />
+
+      <!-- Section 2: Dial Colors & Quick Presets -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2 text-xs font-display font-bold uppercase tracking-wider text-sky-400">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
+            <span>2. Horology Presets & Colors</span>
+          </div>
+        </div>
+
+        <!-- 1-Click Luxury Presets -->
+        <div class="grid grid-cols-5 gap-1.5">
+          <button type="button" data-preset="radium" class="preset-btn py-1.5 px-1 rounded-lg bg-slate-950 border border-emerald-500/50 text-[10px] font-semibold text-emerald-300 hover:bg-slate-800 transition cursor-pointer">Radium</button>
+          <button type="button" data-preset="gold" class="preset-btn py-1.5 px-1 rounded-lg bg-slate-950 border border-slate-700 text-[10px] font-semibold text-amber-300 hover:bg-slate-800 transition cursor-pointer">Gold</button>
+          <button type="button" data-preset="arctic" class="preset-btn py-1.5 px-1 rounded-lg bg-slate-950 border border-slate-700 text-[10px] font-semibold text-sky-300 hover:bg-slate-800 transition cursor-pointer">Arctic</button>
+          <button type="button" data-preset="crimson" class="preset-btn py-1.5 px-1 rounded-lg bg-slate-950 border border-slate-700 text-[10px] font-semibold text-rose-300 hover:bg-slate-800 transition cursor-pointer">Crimson</button>
+          <button type="button" data-preset="ivory" class="preset-btn py-1.5 px-1 rounded-lg bg-slate-950 border border-slate-700 text-[10px] font-semibold text-slate-200 hover:bg-slate-800 transition cursor-pointer">Ivory</button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+            <div>
+              <span class="block text-xs font-medium text-slate-300">Lume Hands</span>
+              <span id="radiumHexLabel" class="text-[11px] font-mono text-slate-400">#34D399</span>
+            </div>
+            <input id="radiumColorInput" type="color" value="#34d399" class="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0" />
+          </div>
+
+          <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+            <div>
+              <span class="block text-xs font-medium text-slate-300">Second Hand</span>
+              <span id="accentHexLabel" class="text-[11px] font-mono text-slate-400">#38BDF8</span>
+            </div>
+            <input id="accentColorInput" type="color" value="#38bdf8" class="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Bezel Case Finish</label>
+            <select id="bezelSelect" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700/80 text-xs text-white focus:outline-none focus:border-emerald-400">
+              <option value="obsidian">Obsidian Steel</option>
+              <option value="gold">Champagne Gold</option>
+              <option value="titanium">Brushed Titanium</option>
+              <option value="emerald">Emerald Carbon</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Default Theme</label>
+            <div class="grid grid-cols-2 gap-1 p-1 rounded-xl bg-slate-950 border border-slate-800">
+              <button id="modeDarkBtn" type="button" class="py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 transition cursor-pointer">Dark</button>
+              <button id="modeLightBtn" type="button" class="py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition cursor-pointer">Light</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="border-slate-800/80" />
+
+      <!-- Section 3: Time Format, Digital Style & Movement -->
+      <div class="space-y-3">
+        <div class="flex items-center gap-2 text-xs font-display font-bold uppercase tracking-wider text-amber-400">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <span>3. Time Format & Display Style</span>
+        </div>
+
+        <!-- 12-Hour vs 24-Hour Time Format -->
+        <div>
+          <label class="block text-[11px] text-slate-400 mb-1">Digital Clock Format</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button id="fmt12Btn" type="button" class="py-2 px-3 rounded-xl text-xs font-semibold bg-sky-500/20 text-sky-300 border border-sky-500/40 transition cursor-pointer">
+              12-Hour (AM/PM)
+            </button>
+            <button id="fmt24Btn" type="button" class="py-2 px-3 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 border border-slate-800 hover:text-white transition cursor-pointer">
+              24-Hour (Intl)
+            </button>
+          </div>
+        </div>
+
+        <!-- Digital Readout Style -->
+        <div>
+          <label class="block text-[11px] text-slate-400 mb-1">Digital Readout Style</label>
+          <div class="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-slate-950 border border-slate-800">
+            <button type="button" data-dstyle="hhmm" class="dstyle-btn py-1.5 px-2 rounded-lg text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 transition cursor-pointer">HH:MM</button>
+            <button type="button" data-dstyle="hhmmss" class="dstyle-btn py-1.5 px-2 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white transition cursor-pointer">HH:MM:SS</button>
+            <button type="button" data-dstyle="analog" class="dstyle-btn py-1.5 px-2 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white transition cursor-pointer">Analog Only</button>
+          </div>
+        </div>
+
+        <!-- Second Hand Movement -->
+        <div>
+          <label class="block text-[11px] text-slate-400 mb-1">Second Hand Movement</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button id="sweepBtn" type="button" class="py-2 px-3 rounded-xl text-xs font-semibold bg-sky-500/20 text-sky-300 border border-sky-500/40 transition cursor-pointer">
+              60FPS Sweep
+            </button>
+            <button id="quartzBtn" type="button" class="py-2 px-3 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 border border-slate-800 hover:text-white transition cursor-pointer">
+              Quartz 1s Tick
+            </button>
+          </div>
+        </div>
+
+        <!-- Feature Toggles -->
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer text-xs text-slate-200">
+            <input id="toggleSubdials" type="checkbox" checked class="accent-emerald-400 w-3.5 h-3.5 rounded" />
+            <span>24H & 1/10S Dials</span>
+          </label>
+          <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer text-xs text-slate-200">
+            <input id="toggleDatePill" type="checkbox" checked class="accent-emerald-400 w-3.5 h-3.5 rounded" />
+            <span>Date & UTC Pill</span>
+          </label>
+          <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer text-xs text-slate-200">
+            <input id="togglePlanner" type="checkbox" checked class="accent-emerald-400 w-3.5 h-3.5 rounded" />
+            <span>Meeting Planner</span>
+          </label>
+          <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer text-xs text-slate-200">
+            <input id="toggleEngagement" type="checkbox" checked class="accent-emerald-400 w-3.5 h-3.5 rounded" />
+            <span>Live Session Bar</span>
+          </label>
+        </div>
+      </div>
+
+      <hr class="border-slate-800/80" />
+
+      <!-- Section 4: Open / Close Hours & Countdown -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2 text-xs font-display font-bold uppercase tracking-wider text-rose-400">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span>4. Open / Close Timers</span>
+          </div>
+          <span class="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/30">Live Countdown</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">Open Time (Local)</label>
+            <input id="openTimeInput" type="time" value="09:00"
+              class="w-full px-2.5 py-1.5 rounded-xl bg-slate-950 border border-slate-700/80 text-xs text-white focus:outline-none focus:border-emerald-400" />
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">Close Time (Local)</label>
+            <input id="closeTimeInput" type="time" value="18:00"
+              class="w-full px-2.5 py-1.5 rounded-xl bg-slate-950 border border-slate-700/80 text-xs text-white focus:outline-none focus:border-emerald-400" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">Schedule</label>
+            <select id="workDaysSelect" class="w-full px-2 py-1.5 rounded-xl bg-slate-950 border border-slate-700/80 text-[11px] text-white focus:outline-none focus:border-emerald-400">
+              <option value="mon-fri">Mon–Fri</option>
+              <option value="mon-sat">Mon–Sat</option>
+              <option value="everyday">Everyday</option>
+              <option value="24x7">24×7 Live</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">Open Badge</label>
+            <input id="openLabelInput" type="text" maxlength="14" value="OPEN NOW"
+              class="w-full px-2 py-1.5 rounded-xl bg-slate-950 border border-slate-700/80 text-[11px] text-emerald-300 font-semibold focus:outline-none focus:border-emerald-400" />
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">Closed Badge</label>
+            <input id="closedLabelInput" type="text" maxlength="14" value="CLOSED"
+              class="w-full px-2 py-1.5 rounded-xl bg-slate-950 border border-slate-700/80 text-[11px] text-rose-300 font-semibold focus:outline-none focus:border-emerald-400" />
+          </div>
+        </div>
+      </div>
+
+      <hr class="border-slate-800/80" />
+
+      <!-- Section 5: Watch Count & Searchable Timezones -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2 text-xs font-display font-bold uppercase tracking-wider text-purple-400">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            <span>5. Watches & Global Zones</span>
+          </div>
+          <span id="activeZonesBadge" class="text-[11px] font-mono text-slate-400">4 of 8 Active</span>
+        </div>
+
+        <!-- Number of Watches Selector (1 to 8) -->
+        <div>
+          <label class="block text-[11px] text-slate-400 mb-1.5">How Many Watches to Display & Export?</label>
+          <div class="grid grid-cols-4 gap-1.5 p-1 rounded-xl bg-slate-950 border border-slate-800">
+            <button type="button" data-count="1" class="watch-count-btn py-1.5 px-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition cursor-pointer">1</button>
+            <button type="button" data-count="2" class="watch-count-btn py-1.5 px-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition cursor-pointer">2</button>
+            <button type="button" data-count="3" class="watch-count-btn py-1.5 px-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition cursor-pointer">3</button>
+            <button type="button" data-count="4" class="watch-count-btn py-1.5 px-2 rounded-lg text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 transition cursor-pointer">4</button>
+            <button type="button" data-count="5" class="watch-count-btn py-1.5 px-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition cursor-pointer">5</button>
+            <button type="button" data-count="6" class="watch-count-btn py-1.5 px-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition cursor-pointer">6</button>
+            <button type="button" data-count="7" class="watch-count-btn py-1.5 px-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition cursor-pointer">7</button>
+            <button type="button" data-count="8" class="watch-count-btn py-1.5 px-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition cursor-pointer">8</button>
+          </div>
+        </div>
+
+        <div id="cityInputsList" class="space-y-2.5"></div>
+      </div>
+
+    </div>
+
+    <!-- Bottom Export Action Bar -->
+    <div class="p-4 border-t border-slate-800 bg-slate-900 space-y-2.5">
+      <button id="downloadHtmlBtn" type="button" class="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-400 to-sky-400 hover:brightness-110 active:scale-[0.99] text-slate-950 font-display font-extrabold text-sm tracking-wide shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 transition cursor-pointer">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        <span>Download Single-File .HTML</span>
+      </button>
+
+      <div class="grid grid-cols-2 gap-2">
+        <button id="viewCodeBtn" type="button" class="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700 flex items-center justify-center gap-1.5 transition cursor-pointer">
+          <svg class="w-3.5 h-3.5 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          <span>View / Copy Code</span>
+        </button>
+        <button id="quickSnapshotBtn" type="button" class="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700 flex items-center justify-center gap-1.5 transition cursor-pointer">
+          <svg class="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span>Clean Status View</span>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- RIGHT PANEL: LIVE EMBEDDABLE SECTION PREVIEW -->
+  <main id="previewRoot" data-bezel="obsidian" class="rw-dark flex-1 min-h-screen p-4 sm:p-8 lg:p-10 flex flex-col justify-between relative overflow-hidden">
+
+    <!-- Ambient Glow -->
+    <div id="ambientGlow" class="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-[620px] h-[620px] rounded-full opacity-35 blur-3xl transition-all duration-500"
+      style="background: radial-gradient(circle, #34d399 0%, #38bdf8 45%, transparent 70%);"></div>
+
+    <!-- Top Live Status & Theme Switcher Bar -->
+    <header class="relative z-10 max-w-6xl w-full mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div>
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-2 border"
+          style="background: var(--rw-pill-bg); border-color: var(--rw-card-border); color: var(--rw-accent);">
+          <span class="w-2 h-2 rounded-full animate-pulse" style="background: var(--rw-radium);"></span>
+          <span id="previewLiveNotice">Live Stream & Support Active • Next Event 7:00 PM IST</span>
+        </div>
+        <h2 id="previewHeaderTitle" class="font-display font-extrabold text-2xl sm:text-3xl tracking-tight">
+          Global Operations & Live Time
+        </h2>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
+        <button id="previewGuideBtn" type="button" class="px-3.5 py-2 rounded-full text-xs font-display font-bold uppercase tracking-wider border backdrop-blur-md flex items-center gap-1.5 shadow-md transition hover:-translate-y-0.5 cursor-pointer"
+          style="background: var(--rw-card-bg); border-color: var(--rw-card-border); color: var(--rw-radium);">
+          <span>📘</span>
+          <span>Help & Guide (.MD)</span>
+        </button>
+        <button id="exitCleanViewBtn" type="button" class="hidden px-3.5 py-2 rounded-full text-xs font-display font-bold uppercase tracking-wider border backdrop-blur-md transition cursor-pointer"
+          style="background: var(--rw-card-bg); border-color: var(--rw-card-border); color: var(--rw-accent);">
+          Show Customizer
+        </button>
+        <button id="previewThemeToggle" type="button" class="px-4 py-2 rounded-full text-xs font-display font-bold uppercase tracking-wider border backdrop-blur-md flex items-center gap-2 shadow-md transition hover:-translate-y-0.5 cursor-pointer"
+          style="background: var(--rw-card-bg); border-color: var(--rw-card-border);">
+          <span id="previewThemeIcon">☀</span>
+          <span id="previewThemeText">Light Mode</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Meeting Planner Scrubber Bar -->
+    <div id="plannerBar" class="relative z-10 max-w-6xl w-full mx-auto mb-6 px-4 py-3 rounded-2xl border backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+      style="background: var(--rw-card-bg); border-color: var(--rw-card-border);">
+      <div class="flex items-center gap-2.5 text-xs">
+        <span class="px-2 py-0.5 rounded-md font-mono font-bold text-[11px]" style="background: var(--rw-pill-bg); color: var(--rw-accent);">PLANNER</span>
+        <span id="plannerStatusText" class="font-semibold">Showing Live Real-Time</span>
+      </div>
+      <div class="flex items-center gap-3 flex-1 max-w-md">
+        <span class="text-[11px] font-mono opacity-70">-12h</span>
+        <input id="plannerSlider" type="range" min="-720" max="720" step="15" value="0" class="w-full accent-emerald-400 cursor-pointer" />
+        <span class="text-[11px] font-mono opacity-70">+12h</span>
+        <button id="plannerResetBtn" type="button" class="px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wider border cursor-pointer shrink-0"
+          style="background: var(--rw-pill-bg); border-color: var(--rw-card-border); color: var(--rw-radium);">
+          Live
+        </button>
+      </div>
+    </div>
+
+    <!-- Multi-Timezone Watch Grid -->
+    <section class="relative z-10 max-w-6xl w-full mx-auto my-auto">
+      <div id="clocksGrid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5"></div>
+    </section>
+
+    <!-- Bottom Live Session & Engagement Strip -->
+    <footer id="engagementBar" class="relative z-10 max-w-6xl w-full mx-auto mt-8 pt-4 border-t flex flex-wrap items-center justify-between gap-3 text-xs"
+      style="border-color: var(--rw-card-border); color: var(--rw-muted);">
+      <div class="flex flex-wrap items-center gap-4">
+        <span class="inline-flex items-center gap-1.5 font-medium">
+          <span class="w-2 h-2 rounded-full" style="background: var(--rw-radium);"></span>
+          Live Watch Uptime: <strong id="uptimeDisplay" class="font-mono" style="color: var(--rw-text);">00m 00s</strong>
+        </span>
+        <span class="hidden sm:inline opacity-40">|</span>
+        <span>Active Zones: <strong id="hubCountDisplay" style="color: var(--rw-text);">4 Hubs</strong></span>
+        <span class="hidden sm:inline opacity-40">|</span>
+        <span>Hours: <strong id="hoursSummaryDisplay" style="color: var(--rw-accent);">09:00–18:00 (Mon–Fri)</strong></span>
+      </div>
+      <div class="flex items-center gap-3 font-display font-semibold tracking-wide">
+        <button id="footerDownloadGuideBtn" type="button" class="underline decoration-dotted hover:opacity-80 cursor-pointer" style="color: var(--rw-radium);">
+          Download User Manual (.md)
+        </button>
+        <span class="opacity-40">•</span>
+        <span>Powered by <span id="footerBrandLabel" style="color: var(--rw-accent);">WORLD SATHI</span></span>
+      </div>
+    </footer>
+  </main>
+
+  <!-- MODAL 1: SEARCHABLE TIMEZONE DIRECTORY PICKER -->
+  <div id="tzModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+      <div class="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between">
+        <div>
+          <h3 id="tzModalTitle" class="font-display font-bold text-base text-white">Select City or Timezone</h3>
+          <p class="text-xs text-slate-400">Search by city, country, region, or IANA zone (e.g., Bhopal, London, Tokyo)</p>
+        </div>
+        <button id="closeTzModalBtn" type="button" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer">✕</button>
+      </div>
+
+      <div class="p-4 border-b border-slate-800 bg-slate-950/60">
+        <input id="tzSearchInput" type="text" placeholder="Type city or country (e.g. India, Bhopal, Dubai, New York)..."
+          class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white focus:outline-none focus:border-emerald-400" />
+      </div>
+
+      <div id="tzResultsList" class="p-3 overflow-y-auto flex-1 space-y-1.5"></div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: STANDALONE CODE VIEWER -->
+  <div id="codeModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-3xl w-full overflow-hidden shadow-2xl flex flex-col max-h-[88vh]">
+      <div class="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between">
+        <div>
+          <h3 class="font-display font-bold text-base text-white">Standalone Single-File HTML Widget</h3>
+          <p class="text-xs text-slate-400">Self-contained HTML + CSS + JS with your exact watches, format, and open/close rules.</p>
+        </div>
+        <button id="closeCodeModalBtn" type="button" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer">✕</button>
+      </div>
+      <div class="p-4 overflow-y-auto flex-1 bg-slate-950">
+        <textarea id="generatedCodeBox" readonly class="w-full h-80 bg-slate-950 text-emerald-300 font-mono text-xs p-3 rounded-xl border border-slate-800 focus:outline-none resize-none"></textarea>
+      </div>
+      <div class="p-4 border-t border-slate-800 flex flex-wrap items-center justify-end gap-2.5">
+        <button id="copyCodeBtn" type="button" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white border border-slate-700 cursor-pointer">
+          Copy to Clipboard
+        </button>
+        <button id="modalDownloadBtn" type="button" class="px-4 py-2 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-xs font-display font-bold text-slate-950 cursor-pointer">
+          Download .HTML File
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: PRODUCT GUIDE, USE CASES, HOW-TO & FAQ DRAWER -->
+  <div id="helpGuideModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/85 backdrop-blur-sm p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-3xl w-full overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+      <!-- Modal Header -->
+      <div class="p-4 sm:p-5 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-900">
+        <div>
+          <span class="inline-block text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 mb-1">
+            Official Documentation & Playbook
+          </span>
+          <h3 class="font-display font-bold text-lg text-white">Radium World-Clock Studio — Complete User Guide</h3>
+          <p class="text-xs text-slate-400">Read online below or download the complete Markdown (.md) manual for your team & clients.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="downloadGuideMdBtn" type="button" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-400 to-sky-400 hover:brightness-110 text-slate-950 font-display font-bold text-xs flex items-center gap-1.5 shadow-md cursor-pointer">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span>Download Guide (.md)</span>
+          </button>
+          <button id="closeHelpGuideBtn" type="button" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer">✕</button>
+        </div>
+      </div>
+
+      <!-- Recommendation Banner -->
+      <div class="px-5 py-3 bg-emerald-950/50 border-b border-emerald-500/20 text-xs text-emerald-200 flex items-center justify-between gap-3">
+        <span>
+          <strong>Tip for Clients & Creators:</strong> Download and read the <strong>.md User Guide</strong> thoroughly to unlock website embedding tricks, WhatsApp/Facebook status ideas, and custom branding presets.
+        </span>
+      </div>
+
+      <!-- Scrollable Guide Content -->
+      <div class="p-5 sm:p-6 overflow-y-auto flex-1 space-y-6 text-sm text-slate-300 leading-relaxed">
+        <!-- 1. Introduction -->
+        <section class="space-y-2">
+          <h4 class="font-display font-bold text-base text-white flex items-center gap-2">
+            <span class="text-emerald-400">01.</span> Introduction — What Is Radium World-Clock Studio?
+          </h4>
+          <p class="text-xs sm:text-sm text-slate-300">
+            <strong>Radium World-Clock Studio</strong> is a luxury, zero-dependency horological widget builder designed for websites, live streams, global teams, and social status creators. It combines smooth <strong>60-FPS analog chronographs</strong> (with luminous radium hands, 24-hour dials, and 1/10-second sub-dials) alongside crisp digital time readouts, automatic daylight-saving sync, and live <strong>Open / Closed business-hour countdowns</strong>—all exportable as a single self-contained <code>.html</code> file.
+          </p>
+        </section>
+
+        <!-- 2. Key Features -->
+        <section class="space-y-2">
+          <h4 class="font-display font-bold text-base text-white flex items-center gap-2">
+            <span class="text-sky-400">02.</span> Key Features at a Glance
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+            <div class="p-3 rounded-xl bg-slate-950 border border-slate-800">
+              <strong class="text-white block mb-0.5">1 to 8 Synchronized Clocks</strong>
+              Choose anywhere from 1 hero watch to 8 global cities with automatic responsive grid centering.
+            </div>
+            <div class="p-3 rounded-xl bg-slate-950 border border-slate-800">
+              <strong class="text-white block mb-0.5">Searchable Global Timezones</strong>
+              Search 80+ curated cities (Bhopal, New Delhi, London, New York, Dubai, Tokyo) plus every IANA zone.
+            </div>
+            <div class="p-3 rounded-xl bg-slate-950 border border-slate-800">
+              <strong class="text-white block mb-0.5">Open / Close Live Countdowns</strong>
+              Set working hours & schedules (Mon–Fri, Mon–Sat, Everyday, 24×7) with real-time <em>"Closes in 2h 15m"</em> badges.
+            </div>
+            <div class="p-3 rounded-xl bg-slate-950 border border-slate-800">
+              <strong class="text-white block mb-0.5">1-Click Standalone Export</strong>
+              Download a single <code>.html</code> file with all custom colors, brand names, and CSS baked inline—no external servers needed.
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. Use Cases -->
+        <section class="space-y-2">
+          <h4 class="font-display font-bold text-base text-white flex items-center gap-2">
+            <span class="text-amber-400">03.</span> Where & Who Can Use It (Use Cases)
+          </h4>
+          <ul class="space-y-1.5 text-xs sm:text-sm list-disc pl-5 text-slate-300">
+            <li><strong>Websites & Contact Pages:</strong> Show visitors your global office hours and live support availability across India, UK, US, UAE, and APAC.</li>
+            <li><strong>WhatsApp Status & Facebook Stories:</strong> Click <em>Clean Status View</em>, record a 10-second loop of the sweeping second hand, and share a signature luxury time card with your own brand name on the dial.</li>
+            <li><strong>Live Streams, Webinars & Coaching:</strong> Display upcoming session times and use the <em>Meeting Planner</em> slider to check attendee hours worldwide.</li>
+            <li><strong>Agencies & Freelancers:</strong> Generate white-labeled clocks with each client's brand name and colors in under 60 seconds.</li>
+          </ul>
+        </section>
+
+        <!-- 4. How-To Quick Steps -->
+        <section class="space-y-2">
+          <h4 class="font-display font-bold text-base text-white flex items-center gap-2">
+            <span class="text-purple-400">04.</span> How-To: Customize & Embed in 4 Steps
+          </h4>
+          <ol class="space-y-1.5 text-xs sm:text-sm list-decimal pl-5 text-slate-300">
+            <li><strong>Brand & Colors:</strong> Enter your Dial Brand Name, Headline, and pick a Horology Preset (<em>Radium, Gold, Arctic, Crimson, Ivory</em>) or custom hex colors.</li>
+            <li><strong>Format & Business Hours:</strong> Toggle <code>12-Hour (AM/PM)</code> or <code>24-Hour</code>, pick <code>HH:MM</code> / <code>HH:MM:SS</code> / <code>Analog Only</code>, and set your Open/Close times.</li>
+            <li><strong>Select 1–8 Watches:</strong> Pick how many watches you need and click <strong>Zone</strong> on each card to search and assign cities.</li>
+            <li><strong>Download & Embed:</strong> Click <strong>Download Single-File .HTML</strong> and upload it to WordPress, Webflow, Shopify, cPanel, or open it directly in any browser.</li>
+          </ol>
+        </section>
+
+        <!-- 5. FAQ -->
+        <section class="space-y-2">
+          <h4 class="font-display font-bold text-base text-white flex items-center gap-2">
+            <span class="text-rose-400">05.</span> Frequently Asked Questions (FAQ)
+          </h4>
+          <div class="space-y-2 text-xs">
+            <div class="p-3 rounded-xl bg-slate-950 border border-slate-800">
+              <strong class="text-white block mb-1">Q: Does the downloaded HTML file require any backend or paid API?</strong>
+              No. It uses your browser's built-in <code>Intl.DateTimeFormat</code> engine, so daylight saving changes and timezone offsets stay accurate forever with zero API keys.
+            </div>
+            <div class="p-3 rounded-xl bg-slate-950 border border-slate-800">
+              <strong class="text-white block mb-1">Q: How can I use this on my WhatsApp Status or Facebook DP?</strong>
+              Click <strong>Clean Status View</strong> to hide the editor sidebar, then take a crisp screenshot for your DP or record a 10–15 second video clip for your WhatsApp Status or Facebook Story.
+            </div>
+            <div class="p-3 rounded-xl bg-slate-950 border border-slate-800">
+              <strong class="text-white block mb-1">Q: Can I embed the exported file inside an existing webpage?</strong>
+              Yes! You can either embed it via an <code>&lt;iframe src="your-widget.html"&gt;</code> or copy the <code>&lt;section id="rwSection"&gt;</code> block, <code>&lt;style&gt;</code>, and <code>&lt;script&gt;</code> directly into any page.
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 border-t border-slate-800 bg-slate-900 flex flex-wrap items-center justify-between gap-3">
+        <span class="text-xs text-slate-400">Includes full Markdown documentation, embedding snippets & tips.</span>
+        <button id="bottomDownloadGuideBtn" type="button" class="px-4 py-2 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-xs font-display font-bold text-slate-950 cursor-pointer">
+          Download Complete Guide (.md)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toastBanner" class="fixed bottom-5 right-5 z-50 translate-y-20 opacity-0 pointer-events-none transition-all duration-300 px-4 py-2.5 rounded-xl bg-slate-900 border border-emerald-500/40 text-xs font-semibold text-emerald-300 shadow-xl">
+    Saved!
+  </div>
+
+  <script>
+    // Rich Global City Directory for Instant Search
+    const CURATED_CITIES = [
+      { label: 'Bhopal / New Delhi', country: 'India', timeZone: 'Asia/Kolkata' },
+      { label: 'Mumbai', country: 'India', timeZone: 'Asia/Kolkata' },
+      { label: 'Bengaluru', country: 'India', timeZone: 'Asia/Kolkata' },
+      { label: 'Kolkata', country: 'India', timeZone: 'Asia/Kolkata' },
+      { label: 'Dubai', country: 'United Arab Emirates', timeZone: 'Asia/Dubai' },
+      { label: 'Abu Dhabi', country: 'United Arab Emirates', timeZone: 'Asia/Dubai' },
+      { label: 'Riyadh', country: 'Saudi Arabia', timeZone: 'Asia/Riyadh' },
+      { label: 'Doha', country: 'Qatar', timeZone: 'Asia/Qatar' },
+      { label: 'Singapore', country: 'Singapore', timeZone: 'Asia/Singapore' },
+      { label: 'Kuala Lumpur', country: 'Malaysia', timeZone: 'Asia/Kuala_Lumpur' },
+      { label: 'Bangkok', country: 'Thailand', timeZone: 'Asia/Bangkok' },
+      { label: 'Jakarta', country: 'Indonesia', timeZone: 'Asia/Jakarta' },
+      { label: 'Hong Kong', country: 'China', timeZone: 'Asia/Hong_Kong' },
+      { label: 'Shanghai / Beijing', country: 'China', timeZone: 'Asia/Shanghai' },
+      { label: 'Tokyo', country: 'Japan', timeZone: 'Asia/Tokyo' },
+      { label: 'Seoul', country: 'South Korea', timeZone: 'Asia/Seoul' },
+      { label: 'Sydney', country: 'Australia', timeZone: 'Australia/Sydney' },
+      { label: 'Melbourne', country: 'Australia', timeZone: 'Australia/Melbourne' },
+      { label: 'Perth', country: 'Australia', timeZone: 'Australia/Perth' },
+      { label: 'Auckland', country: 'New Zealand', timeZone: 'Pacific/Auckland' },
+      { label: 'London', country: 'United Kingdom', timeZone: 'Europe/London' },
+      { label: 'Manchester', country: 'United Kingdom', timeZone: 'Europe/London' },
+      { label: 'Paris', country: 'France', timeZone: 'Europe/Paris' },
+      { label: 'Berlin', country: 'Germany', timeZone: 'Europe/Berlin' },
+      { label: 'Frankfurt', country: 'Germany', timeZone: 'Europe/Berlin' },
+      { label: 'Amsterdam', country: 'Netherlands', timeZone: 'Europe/Amsterdam' },
+      { label: 'Zurich', country: 'Switzerland', timeZone: 'Europe/Zurich' },
+      { label: 'Madrid', country: 'Spain', timeZone: 'Europe/Madrid' },
+      { label: 'Rome', country: 'Italy', timeZone: 'Europe/Rome' },
+      { label: 'Stockholm', country: 'Sweden', timeZone: 'Europe/Stockholm' },
+      { label: 'Istanbul', country: 'Turkey', timeZone: 'Europe/Istanbul' },
+      { label: 'Cairo', country: 'Egypt', timeZone: 'Africa/Cairo' },
+      { label: 'Johannesburg', country: 'South Africa', timeZone: 'Africa/Johannesburg' },
+      { label: 'Lagos', country: 'Nigeria', timeZone: 'Africa/Lagos' },
+      { label: 'Nairobi', country: 'Kenya', timeZone: 'Africa/Nairobi' },
+      { label: 'New York', country: 'United States (EST/EDT)', timeZone: 'America/New_York' },
+      { label: 'Chicago', country: 'United States (CST/CDT)', timeZone: 'America/Chicago' },
+      { label: 'Denver', country: 'United States (MST/MDT)', timeZone: 'America/Denver' },
+      { label: 'Los Angeles', country: 'United States (PST/PDT)', timeZone: 'America/Los_Angeles' },
+      { label: 'San Francisco', country: 'United States (PST/PDT)', timeZone: 'America/Los_Angeles' },
+      { label: 'Houston', country: 'United States (CST/CDT)', timeZone: 'America/Chicago' },
+      { label: 'Toronto', country: 'Canada', timeZone: 'America/Toronto' },
+      { label: 'Vancouver', country: 'Canada', timeZone: 'America/Vancouver' },
+      { label: 'São Paulo', country: 'Brazil', timeZone: 'America/Sao_Paulo' },
+      { label: 'Mexico City', country: 'Mexico', timeZone: 'America/Mexico_City' },
+      { label: 'Buenos Aires', country: 'Argentina', timeZone: 'America/Argentina/Buenos_Aires' },
+      { label: 'Honolulu', country: 'United States (Hawaii)', timeZone: 'Pacific/Honolulu' },
+      { label: 'UTC / GMT', country: 'Coordinated Universal Time', timeZone: 'UTC' }
+    ];
+
+    // Append all browser-supported IANA zones so every global location is searchable
+    const ALL_SEARCHABLE_ZONES = (() => {
+      const list = [...CURATED_CITIES];
+      const existing = new Set(list.map(i => `${i.label.toLowerCase()}|${i.timeZone}`));
+      if (typeof Intl !== 'undefined' && typeof Intl.supportedValuesOf === 'function') {
+        try {
+          Intl.supportedValuesOf('timeZone').forEach(tz => {
+            const parts = tz.split('/');
+            const cityLabel = parts[parts.length - 1].replace(/_/g, ' ');
+            const region = parts.length > 1 ? parts[0].replace(/_/g, ' ') : 'Global';
+            const key = `${cityLabel.toLowerCase()}|${tz}`;
+            if (!existing.has(key)) {
+              list.push({ label: cityLabel, country: region, timeZone: tz });
+            }
+          });
+        } catch (e) {}
+      }
+      return list;
+    })();
+
+    // Studio Application State
+    const state = {
+      brandName: 'WORLD SATHI',
+      headerTitle: 'Global Operations & Live Time',
+      liveNotice: 'Live Stream & Support Active • Next Event 7:00 PM IST',
+      radiumColor: '#34d399',
+      accentColor: '#38bdf8',
+      bezel: 'obsidian',
+      darkMode: true,
+      smoothSweep: true,
+      use24Hour: false,
+      digitalStyle: 'hhmm', // 'hhmm' | 'hhmmss' | 'analog'
+      watchCount: 4,
+      showSubdials: true,
+      showDatePill: true,
+      showPlanner: true,
+      showEngagementBar: true,
+      includeThemeToggle: true,
+      openTime: '09:00',
+      closeTime: '18:00',
+      workDays: 'mon-fri', // 'mon-fri' | 'mon-sat' | 'everyday' | '24x7'
+      openLabel: 'OPEN NOW',
+      closedLabel: 'CLOSED',
+      plannerOffsetMin: 0,
+      cities: [
+        { id: 'c1', timeZone: 'Asia/Kolkata', label: 'New Delhi / Bhopal' },
+        { id: 'c2', timeZone: 'Europe/London', label: 'London' },
+        { id: 'c3', timeZone: 'America/New_York', label: 'New York' },
+        { id: 'c4', timeZone: 'Asia/Tokyo', label: 'Tokyo' },
+        { id: 'c5', timeZone: 'Asia/Dubai', label: 'Dubai' },
+        { id: 'c6', timeZone: 'Australia/Sydney', label: 'Sydney' },
+        { id: 'c7', timeZone: 'Asia/Singapore', label: 'Singapore' },
+        { id: 'c8', timeZone: 'America/Los_Angeles', label: 'Los Angeles' }
+      ]
+    };
+
+    const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const WEEKDAY_MAP = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+    const sessionStart = Date.now();
+    let clockDomRefs = [];
+    let editingCityIndex = 0;
+
+    function hexToRgba(hex, alpha) {
+      const clean = hex.replace('#', '');
+      const num = parseInt(clean, 16);
+      const r = (num >> 16) & 255;
+      const g = (num >> 8) & 255;
+      const b = num & 255;
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toastBanner');
+      toast.textContent = msg;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      clearTimeout(toast._timer);
+      toast._timer = setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 2500);
+    }
+
+    function createTicksHTML() {
+      let html = '';
+      for (let i = 0; i < 60; i++) {
+        let cls = 'rw-tick';
+        if (i % 5 === 0) cls += ' major';
+        if (i % 15 === 0) cls += ' cardinal';
+        html += `<div class="${cls}" style="transform: rotate(${i * 6}deg);"></div>`;
+      }
+      return html;
+    }
+
+    function formatDialBrand(raw) {
+      const clean = (raw || 'RADIUM').trim().toUpperCase();
+      const parts = clean.split(/\s+/);
+      if (parts.length > 1) {
+        return `${parts[0]} <span>${parts.slice(1).join(' ')}</span>`;
+      }
+      return clean;
+    }
+
+    function parseHHMMToMinutes(str, fallback) {
+      if (!str || !str.includes(':')) return fallback;
+      const [h, m] = str.split(':').map(Number);
+      if (Number.isNaN(h) || Number.isNaN(m)) return fallback;
+      return h * 60 + m;
+    }
+
+    function formatDuration(mins) {
+      const total = Math.max(0, Math.round(mins));
+      const h = Math.floor(total / 60);
+      const m = total % 60;
+      if (h > 0 && m > 0) return `${h}h ${m}m`;
+      if (h > 0) return `${h}h`;
+      return `${m}m`;
+    }
+
+    // Extract accurate time parts for any IANA timezone (using hourCycle: 'h23' for 0..23)
+    function getZonedParts(dateObj, timeZone) {
+      try {
+        const dtf = new Intl.DateTimeFormat('en-US', {
+          timeZone,
+          hourCycle: 'h23',
+          year: 'numeric',
+          month: 'numeric',
+          day: 'numeric',
+          weekday: 'short',
+          hour: 'numeric',
+          minute: 'numeric',
+          second: 'numeric',
+          timeZoneName: 'shortOffset'
+        });
+        const parts = dtf.formatToParts(dateObj);
+        const map = {};
+        for (const p of parts) {
+          map[p.type] = p.value;
+        }
+        const hour24 = parseInt(map.hour, 10) % 24;
+        const minute = parseInt(map.minute, 10) || 0;
+        const second = parseInt(map.second, 10) || 0;
+        const dayNum = parseInt(map.day, 10) || dateObj.getDate();
+        const monthIdx = (parseInt(map.month, 10) || 1) - 1;
+        const weekdayStr = map.weekday || DAYS[dateObj.getDay()];
+        const weekdayIdx = WEEKDAY_MAP[weekdayStr] ?? dateObj.getDay();
+        const offsetName = (map.timeZoneName || 'UTC').replace('GMT', 'UTC');
+        return { hour24, minute, second, dayNum, monthIdx, weekdayStr, weekdayIdx, offsetName };
+      } catch (e) {
+        return {
+          hour24: dateObj.getHours(),
+          minute: dateObj.getMinutes(),
+          second: dateObj.getSeconds(),
+          dayNum: dateObj.getDate(),
+          monthIdx: dateObj.getMonth(),
+          weekdayStr: DAYS[dateObj.getDay()],
+          weekdayIdx: dateObj.getDay(),
+          offsetName: 'LOCAL'
+        };
+      }
+    }
+
+    // Evaluate Open/Close Status & Live Countdown
+    function getOpenCloseInfo(zp) {
+      if (state.workDays === '24x7') {
+        return { isOpen: true, badge: state.openLabel || 'OPEN 24×7', countdown: 'Always Active' };
+      }
+
+      const openMin = parseHHMMToMinutes(state.openTime, 9 * 60);
+      const closeMin = parseHHMMToMinutes(state.closeTime, 18 * 60);
+      const nowMin = zp.hour24 * 60 + zp.minute;
+
+      const isAllowedDay = (dayIdx) => {
+        if (state.workDays === 'everyday') return true;
+        if (state.workDays === 'mon-sat') return dayIdx >= 1 && dayIdx <= 6;
+        return dayIdx >= 1 && dayIdx <= 5;
+      };
+
+      const todayAllowed = isAllowedDay(zp.weekdayIdx);
+      let isOpen = false;
+
+      if (todayAllowed) {
+        if (closeMin > openMin) {
+          isOpen = nowMin >= openMin && nowMin < closeMin;
+        } else if (closeMin < openMin) {
+          isOpen = nowMin >= openMin || nowMin < closeMin;
+        }
+      }
+
+      if (isOpen) {
+        const diff = closeMin > nowMin ? (closeMin - nowMin) : (1440 - nowMin + closeMin);
+        return {
+          isOpen: true,
+          badge: state.openLabel || 'OPEN NOW',
+          countdown: `Closes in ${formatDuration(diff)}`
+        };
+      }
+
+      // Compute next opening countdown
+      let minsUntilOpen = 0;
+      if (todayAllowed && nowMin < openMin) {
+        minsUntilOpen = openMin - nowMin;
+      } else {
+        for (let d = 1; d <= 7; d++) {
+          const nextDay = (zp.weekdayIdx + d) % 7;
+          if (isAllowedDay(nextDay)) {
+            minsUntilOpen = (1440 - nowMin) + (d - 1) * 1440 + openMin;
+            break;
+          }
+        }
+      }
+
+      return {
+        isOpen: false,
+        badge: state.closedLabel || 'CLOSED',
+        countdown: minsUntilOpen > 0 ? `Opens in ${formatDuration(minsUntilOpen)}` : `Opens at ${state.openTime}`
+      };
+    }
+
+    function getActiveCities() {
+      return state.cities.slice(0, state.watchCount);
+    }
+
+    // Render City Selector Inputs (Only for active watch count 1..8)
+    function renderCityControls() {
+      const container = document.getElementById('cityInputsList');
+      const activeCities = getActiveCities();
+      document.getElementById('activeZonesBadge').textContent = `${activeCities.length} of ${state.cities.length} Active`;
+      document.getElementById('hubCountDisplay').textContent = `${activeCities.length} ${activeCities.length === 1 ? 'Hub' : 'Hubs'}`;
+      container.innerHTML = '';
+
+      activeCities.forEach((city, idx) => {
+        const row = document.createElement('div');
+        row.className = 'p-2.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2';
+        row.innerHTML = `
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-[11px] font-mono font-bold text-slate-400">WATCH #${idx + 1}</span>
+            <span class="text-[10px] font-mono text-sky-400 truncate max-w-[175px]">${city.timeZone}</span>
+          </div>
+          <div class="grid grid-cols-12 gap-2">
+            <input type="text" data-idx="${idx}" value="${city.label}" placeholder="City Label"
+              class="city-label-input col-span-7 px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-emerald-400" />
+            <button type="button" data-idx="${idx}"
+              class="open-tz-picker-btn col-span-5 px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-emerald-300 flex items-center justify-between gap-1 transition cursor-pointer">
+              <span class="truncate">Zone</span>
+              <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </button>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+
+      container.querySelectorAll('.city-label-input').forEach(inp => {
+        inp.addEventListener('input', e => {
+          const i = Number(e.target.dataset.idx);
+          state.cities[i].label = e.target.value || 'City';
+          renderClockGrid();
+          updateAllClocks();
+        });
+      });
+
+      container.querySelectorAll('.open-tz-picker-btn').forEach(btn => {
+        btn.addEventListener('click', e => {
+          const i = Number(e.currentTarget.dataset.idx);
+          openTimezoneModal(i);
+        });
+      });
+    }
+
+    // Searchable Timezone Modal Logic
+    function openTimezoneModal(cityIdx) {
+      editingCityIndex = cityIdx;
+      const modal = document.getElementById('tzModal');
+      const searchInp = document.getElementById('tzSearchInput');
+      document.getElementById('tzModalTitle').textContent = `Choose Timezone for Watch #${cityIdx + 1}`;
+      searchInp.value = '';
+      renderTimezoneSearchResults('');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      setTimeout(() => searchInp.focus(), 50);
+    }
+
+    function closeTimezoneModal() {
+      const modal = document.getElementById('tzModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function renderTimezoneSearchResults(query) {
+      const list = document.getElementById('tzResultsList');
+      const q = query.trim().toLowerCase();
+      const filtered = q
+        ? ALL_SEARCHABLE_ZONES.filter(z =>
+            z.label.toLowerCase().includes(q) ||
+            z.country.toLowerCase().includes(q) ||
+            z.timeZone.toLowerCase().includes(q)
+          ).slice(0, 60)
+        : CURATED_CITIES;
+
+      if (filtered.length === 0) {
+        list.innerHTML = `<div class="p-6 text-center text-xs text-slate-400">No matching city or timezone found for "${query}". Try searching a major nearby city or country.</div>`;
+        return;
+      }
+
+      const now = new Date();
+      list.innerHTML = filtered.map(item => {
+        const zp = getZonedParts(now, item.timeZone);
+        const h12 = zp.hour24 % 12 === 0 ? 12 : zp.hour24 % 12;
+        const mm = String(zp.minute).padStart(2, '0');
+        const previewStr = state.use24Hour
+          ? `${String(zp.hour24).padStart(2, '0')}:${mm}`
+          : `${h12}:${mm} ${zp.hour24 >= 12 ? 'PM' : 'AM'}`;
+
+        return `
+          <button type="button" data-tz="${item.timeZone}" data-label="${item.label}"
+            class="tz-select-item w-full text-left p-3 rounded-xl bg-slate-950/70 hover:bg-slate-800 border border-slate-800/80 hover:border-emerald-500/40 flex items-center justify-between gap-3 transition cursor-pointer">
+            <div>
+              <div class="text-xs font-bold text-white">${item.label} <span class="text-slate-400 font-normal">• ${item.country}</span></div>
+              <div class="text-[11px] font-mono text-sky-400 mt-0.5">${item.timeZone} (${zp.offsetName})</div>
+            </div>
+            <div class="text-xs font-mono font-bold text-emerald-300 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20 shrink-0">
+              ${previewStr}
+            </div>
+          </button>
+        `;
+      }).join('');
+
+      list.querySelectorAll('.tz-select-item').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tz = btn.dataset.tz;
+          const lbl = btn.dataset.label;
+          state.cities[editingCityIndex].timeZone = tz;
+          state.cities[editingCityIndex].label = lbl;
+          renderCityControls();
+          renderClockGrid();
+          syncVisualStyles();
+          updateAllClocks();
+          closeTimezoneModal();
+          showToast(`Watch #${editingCityIndex + 1} updated to ${lbl}`);
+        });
+      });
+    }
+
+    // Build Clock Cards in Preview Grid (Adaptive layout for 1..8 watches)
+    function renderClockGrid() {
+      const grid = document.getElementById('clocksGrid');
+      const activeCities = getActiveCities();
+      const count = activeCities.length;
+
+      if (count === 1) {
+        grid.className = 'relative z-10 grid grid-cols-1 max-w-sm mx-auto gap-5';
+      } else if (count === 2) {
+        grid.className = 'relative z-10 grid grid-cols-1 sm:grid-cols-2 max-w-3xl mx-auto gap-5';
+      } else if (count === 3) {
+        grid.className = 'relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto gap-5';
+      } else {
+        grid.className = 'relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5';
+      }
+
+      grid.innerHTML = '';
+      clockDomRefs = [];
+      const ticksHTML = createTicksHTML();
+      const brandHTML = formatDialBrand(state.brandName);
+
+      activeCities.forEach((city) => {
+        const card = document.createElement('article');
+        card.className = 'rw-card';
+        card.innerHTML = `
+          <div class="w-full flex items-center justify-between gap-2 px-1">
+            <div class="text-left min-w-0">
+              <h3 class="font-display font-bold text-sm tracking-tight truncate">${city.label}</h3>
+              <p class="text-[10px] font-mono opacity-65 truncate">${city.timeZone}</p>
+            </div>
+            <span class="rw-status-badge shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase border">
+              OPEN NOW
+            </span>
+          </div>
+
+          <div class="rw-bezel">
+            <div class="rw-bezel-ring"></div>
+            <div class="rw-dial">
+              <div class="rw-ticks">${ticksHTML}</div>
+              <div class="rw-dial-brand">${brandHTML}</div>
+
+              <div class="rw-subdial left" style="opacity: ${state.showSubdials ? '1' : '0'};">
+                <div class="rw-sub-needle rw-sub24"></div>
+                <div class="rw-sub-pin"></div>
+                <span class="rw-sub-label">24H</span>
+              </div>
+
+              <div class="rw-subdial right" style="opacity: ${state.showSubdials ? '1' : '0'};">
+                <div class="rw-sub-needle rw-subms"></div>
+                <div class="rw-sub-pin"></div>
+                <span class="rw-sub-label">1/10S</span>
+              </div>
+
+              <div class="rw-needle hour"></div>
+              <div class="rw-needle minute"></div>
+              <div class="rw-needle second"></div>
+              <div class="rw-center"></div>
+            </div>
+          </div>
+
+          <div class="rw-time ${state.digitalStyle === 'hhmmss' ? 'has-sec' : ''}" style="display: ${state.digitalStyle === 'analog' ? 'none' : 'flex'};">12:00 <span class="ampm">PM</span></div>
+          <div class="rw-date" style="display: ${state.showDatePill ? 'inline-flex' : 'none'};">Mon, Nov <span class="circle">26</span></div>
+          <div class="rw-countdown text-[10px] font-medium mt-1.5 opacity-75">Closes in 2h 00m</div>
+        `;
+        grid.appendChild(card);
+
+        clockDomRefs.push({
+          timeZone: city.timeZone,
+          hourHand: card.querySelector('.rw-needle.hour'),
+          minHand: card.querySelector('.rw-needle.minute'),
+          secHand: card.querySelector('.rw-needle.second'),
+          sub24: card.querySelector('.rw-sub24'),
+          subMs: card.querySelector('.rw-subms'),
+          timeText: card.querySelector('.rw-time'),
+          dateText: card.querySelector('.rw-date'),
+          statusBadge: card.querySelector('.rw-status-badge'),
+          countdownText: card.querySelector('.rw-countdown'),
+          lastTimeStr: '',
+          lastDateStr: '',
+          lastStatusKey: ''
+        });
+      });
+    }
+
+    // Sync Colors, Theme, and Visibility in Preview
+    function syncVisualStyles() {
+      const root = document.getElementById('previewRoot');
+      root.style.setProperty('--rw-radium', state.radiumColor);
+      root.style.setProperty('--rw-radium-glow', hexToRgba(state.radiumColor, 0.78));
+      root.style.setProperty('--rw-accent', state.accentColor);
+      root.style.setProperty('--rw-accent-glow', hexToRgba(state.accentColor, 0.78));
+      root.setAttribute('data-bezel', state.bezel);
+
+      if (state.darkMode) {
+        root.classList.add('rw-dark');
+        document.getElementById('previewThemeIcon').textContent = '☀';
+        document.getElementById('previewThemeText').textContent = 'Light Mode';
+      } else {
+        root.classList.remove('rw-dark');
+        document.getElementById('previewThemeIcon').textContent = '☾';
+        document.getElementById('previewThemeText').textContent = 'Dark Mode';
+      }
+
+      document.getElementById('ambientGlow').style.background =
+        `radial-gradient(circle, ${hexToRgba(state.radiumColor, 0.35)} 0%, ${hexToRgba(state.accentColor, 0.25)} 45%, transparent 70%)`;
+
+      document.getElementById('previewHeaderTitle').textContent = state.headerTitle || 'World Clock';
+      document.getElementById('previewLiveNotice').textContent = state.liveNotice || 'Live';
+      document.getElementById('footerBrandLabel').textContent = (state.brandName || 'RADIUM').toUpperCase();
+      document.getElementById('plannerBar').style.display = state.showPlanner ? 'flex' : 'none';
+      document.getElementById('engagementBar').style.display = state.showEngagementBar ? 'flex' : 'none';
+
+      const schedMap = { 'mon-fri': 'Mon–Fri', 'mon-sat': 'Mon–Sat', 'everyday': 'Everyday', '24x7': '24×7' };
+      document.getElementById('hoursSummaryDisplay').textContent =
+        state.workDays === '24x7' ? '24×7 Live' : `${state.openTime}–${state.closeTime} (${schedMap[state.workDays]})`;
+
+      document.querySelectorAll('.rw-dial-brand').forEach(el => {
+        el.innerHTML = formatDialBrand(state.brandName);
+      });
+      document.querySelectorAll('.rw-subdial').forEach(el => {
+        el.style.opacity = state.showSubdials ? '1' : '0';
+      });
+      document.querySelectorAll('.rw-date').forEach(el => {
+        el.style.display = state.showDatePill ? 'inline-flex' : 'none';
+      });
+      document.querySelectorAll('.rw-time').forEach(el => {
+        el.style.display = state.digitalStyle === 'analog' ? 'none' : 'flex';
+        el.classList.toggle('has-sec', state.digitalStyle === 'hhmmss');
+      });
+
+      // Force digital readout & open/close refresh on next frame
+      clockDomRefs.forEach(ref => {
+        ref.lastTimeStr = '';
+        ref.lastDateStr = '';
+        ref.lastStatusKey = '';
+      });
+    }
+
+    // Immediate & 60-FPS Synchronized Clock Update
+    function updateAllClocks() {
+      const baseNow = new Date(Date.now() + state.plannerOffsetMin * 60000);
+      const ms = baseNow.getMilliseconds();
+      const rawSec = baseNow.getSeconds();
+      const secFraction = state.smoothSweep ? (rawSec + ms / 1000) : rawSec;
+
+      for (let i = 0; i < clockDomRefs.length; i++) {
+        const ref = clockDomRefs[i];
+        try {
+          const zp = getZonedParts(baseNow, ref.timeZone);
+          const minutes = zp.minute + secFraction / 60;
+          const smoothHours = (zp.hour24 % 12) + minutes / 60;
+
+          ref.hourHand.style.transform = `rotate(${smoothHours * 30}deg)`;
+          ref.minHand.style.transform = `rotate(${minutes * 6}deg)`;
+          ref.secHand.style.transform = `rotate(${secFraction * 6}deg)`;
+
+          const deg24 = ((zp.hour24 + minutes / 60) / 24) * 360;
+          const degMs = (ms / 1000) * 360;
+          ref.sub24.style.transform = `rotate(${deg24}deg)`;
+          ref.subMs.style.transform = `rotate(${degMs}deg)`;
+
+          // Digital Readout (12-Hour vs 24-Hour + HH:MM vs HH:MM:SS)
+          if (state.digitalStyle !== 'analog') {
+            const mm = String(zp.minute).padStart(2, '0');
+            const ss = String(rawSec).padStart(2, '0');
+            const secSuffix = state.digitalStyle === 'hhmmss' ? `:${ss}` : '';
+            let timeHTML = '';
+            if (state.use24Hour) {
+              const hh24 = String(zp.hour24).padStart(2, '0');
+              timeHTML = `${hh24}:${mm}${secSuffix} <span class="ampm">24H</span>`;
+            } else {
+              const h12 = zp.hour24 % 12 === 0 ? 12 : zp.hour24 % 12;
+              const ampm = zp.hour24 >= 12 ? 'PM' : 'AM';
+              timeHTML = `${h12}:${mm}${secSuffix} <span class="ampm">${ampm}</span>`;
+            }
+            if (ref.lastTimeStr !== timeHTML) {
+              ref.timeText.innerHTML = timeHTML;
+              ref.lastTimeStr = timeHTML;
+            }
+          }
+
+          // Date + UTC Offset Pill
+          const dateHTML = `${zp.weekdayStr}, ${MONTHS[zp.monthIdx]} <span class="circle">${zp.dayNum}</span> <span style="opacity:0.75;font-size:0.62rem;">${zp.offsetName}</span>`;
+          if (ref.lastDateStr !== dateHTML) {
+            ref.dateText.innerHTML = dateHTML;
+            ref.lastDateStr = dateHTML;
+          }
+
+          // Open / Close Timer & Badge
+          const oc = getOpenCloseInfo(zp);
+          const statusKey = `${oc.isOpen}|${oc.badge}|${oc.countdown}`;
+          if (ref.lastStatusKey !== statusKey) {
+            ref.statusBadge.textContent = oc.badge;
+            ref.countdownText.textContent = oc.countdown;
+            if (oc.isOpen) {
+              ref.statusBadge.style.background = hexToRgba(state.radiumColor, 0.16);
+              ref.statusBadge.style.borderColor = hexToRgba(state.radiumColor, 0.45);
+              ref.statusBadge.style.color = state.radiumColor;
+            } else {
+              ref.statusBadge.style.background = 'rgba(244, 63, 94, 0.14)';
+              ref.statusBadge.style.borderColor = 'rgba(244, 63, 94, 0.35)';
+              ref.statusBadge.style.color = '#fb7185';
+            }
+            ref.lastStatusKey = statusKey;
+          }
+        } catch (err) {
+          // Keep loop running cleanly even if an individual zone fails
+        }
+      }
+
+      // Live Uptime Counter
+      const elapsedSec = Math.floor((Date.now() - sessionStart) / 1000);
+      const upM = String(Math.floor(elapsedSec / 60)).padStart(2, '0');
+      const upS = String(elapsedSec % 60).padStart(2, '0');
+      const uptimeEl = document.getElementById('uptimeDisplay');
+      if (uptimeEl) uptimeEl.textContent = `${upM}m ${upS}s`;
+    }
+
+    function tickLoop() {
+      try {
+        updateAllClocks();
+      } finally {
+        requestAnimationFrame(tickLoop);
+      }
+    }
+
+    // Generate Complete Zero-Dependency Standalone HTML File
+    function generateStandaloneHTML() {
+      const selectedCities = getActiveCities();
+      const citiesJSON = JSON.stringify(selectedCities);
+      const brandUpper = (state.brandName || 'RADIUM').trim().toUpperCase();
+      const brandParts = brandUpper.split(/\s+/);
+      const dialBrandMarkup = brandParts.length > 1
+        ? `${brandParts[0]} <span>${brandParts.slice(1).join(' ')}</span>`
+        : brandUpper;
+
+      let bezelCSS = '';
+      if (state.bezel === 'gold') {
+        bezelCSS = '--rw-bezel-bg: linear-gradient(145deg, #785a28 0%, #2c200d 55%, #8c6a30 100%); --rw-bezel-border: rgba(251, 191, 36, 0.5);';
+      } else if (state.bezel === 'titanium') {
+        bezelCSS = '--rw-bezel-bg: linear-gradient(145deg, #64748b 0%, #334155 50%, #475569 100%); --rw-bezel-border: rgba(226, 232, 240, 0.45);';
+      } else if (state.bezel === 'emerald') {
+        bezelCSS = '--rw-bezel-bg: linear-gradient(145deg, #064e3b 0%, #022c22 60%, #065f46 100%); --rw-bezel-border: rgba(52, 211, 153, 0.45);';
+      }
+
+      const count = selectedCities.length;
+      const gridCols = count === 1
+        ? 'minmax(260px, 360px)'
+        : count === 2
+          ? 'repeat(auto-fit, minmax(260px, 340px))'
+          : count === 3
+            ? 'repeat(auto-fit, minmax(250px, 320px))'
+            : 'repeat(auto-fit, minmax(235px, 1fr))';
+      const gridJustify = count <= 3 ? 'justify-content: center;' : '';
+      const schedLabel = state.workDays === '24x7'
+        ? '24×7 Live'
+        : `${state.openTime}–${state.closeTime} (${state.workDays.toUpperCase()})`;
+
+      return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${brandUpper} — Global Live Clock Widget</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Orbitron:wght@700;800&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    .rw-widget-section {
+      --rw-bg: radial-gradient(circle at 50% 35%, #f1f5f9 0%, #e2e8f0 60%, #cbd5e1 100%);
+      --rw-card-bg: rgba(255, 255, 255, 0.86);
+      --rw-card-border: rgba(15, 23, 42, 0.12);
+      --rw-card-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.14), inset 0 1px 2px rgba(255, 255, 255, 0.9);
+      --rw-bezel-bg: linear-gradient(145deg, #e2e8f0 0%, #cbd5e1 100%);
+      --rw-bezel-border: rgba(15, 23, 42, 0.16);
+      --rw-dial-bg: radial-gradient(circle at 45% 40%, #ffffff 0%, #f1f5f9 75%, #e2e8f0 100%);
+      --rw-dial-shadow: inset 0 6px 14px rgba(15, 23, 42, 0.12), 0 8px 20px rgba(15, 23, 42, 0.08);
+      --rw-subdial-bg: radial-gradient(circle, #f8fafc 0%, #e2e8f0 100%);
+      --rw-text: #0f172a;
+      --rw-muted: #64748b;
+      --rw-tick-minor: rgba(15, 23, 42, 0.25);
+      --rw-hand-casing: #1e293b;
+      --rw-radium: ${state.radiumColor};
+      --rw-radium-glow: ${hexToRgba(state.radiumColor, 0.78)};
+      --rw-accent: ${state.accentColor};
+      --rw-accent-glow: ${hexToRgba(state.accentColor, 0.78)};
+      --rw-pill-bg: rgba(15, 23, 42, 0.06);
+      --rw-circle-bg: #0f172a;
+      --rw-circle-text: #ffffff;
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--rw-bg);
+      color: var(--rw-text);
+      min-height: 100vh;
+      padding: 32px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      transition: background 0.4s ease, color 0.3s ease;
+    }
+    .rw-widget-section.rw-dark {
+      --rw-bg: radial-gradient(circle at 50% 35%, #131a29 0%, #070b12 60%, #020306 100%);
+      --rw-card-bg: rgba(18, 26, 38, 0.84);
+      --rw-card-border: rgba(255, 255, 255, 0.1);
+      --rw-card-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.85), inset 0 1px 1.5px rgba(255, 255, 255, 0.16);
+      --rw-bezel-bg: linear-gradient(145deg, #1e293b 0%, #090d14 100%);
+      --rw-bezel-border: rgba(56, 189, 248, 0.35);
+      --rw-dial-bg: radial-gradient(circle at 45% 40%, #1a2232 0%, #0d121c 75%, #070a10 100%);
+      --rw-dial-shadow: inset 0 10px 22px rgba(0, 0, 0, 0.85), 0 0 28px rgba(0, 0, 0, 0.6);
+      --rw-subdial-bg: radial-gradient(circle, #0d131f 0%, #161f30 100%);
+      --rw-text: #f8fafc;
+      --rw-muted: #94a3b8;
+      --rw-tick-minor: rgba(255, 255, 255, 0.22);
+      --rw-hand-casing: #090d14;
+      --rw-pill-bg: rgba(255, 255, 255, 0.06);
+      --rw-circle-bg: ${state.accentColor};
+      --rw-circle-text: #06111a;
+      ${bezelCSS}
+    }
+    .rw-wrap { max-width: 1200px; width: 100%; margin: 0 auto; }
+    .rw-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+    .rw-notice { display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px; border-radius: 99px; font-size: 0.75rem; font-weight: 600; background: var(--rw-pill-bg); border: 1px solid var(--rw-card-border); color: var(--rw-accent); margin-bottom: 8px; }
+    .rw-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--rw-radium); box-shadow: 0 0 8px var(--rw-radium-glow); }
+    .rw-title { font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.45rem, 3vw, 2rem); font-weight: 700; letter-spacing: -0.02em; }
+    .rw-btn { background: var(--rw-card-bg); border: 1px solid var(--rw-card-border); color: var(--rw-text); font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; padding: 9px 16px; border-radius: 99px; cursor: pointer; }
+    .rw-planner { display: ${state.showPlanner ? 'flex' : 'none'}; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-radius: 18px; background: var(--rw-card-bg); border: 1px solid var(--rw-card-border); margin-bottom: 22px; font-size: 0.78rem; }
+    .rw-planner-controls { display: flex; align-items: center; gap: 10px; flex: 1; max-width: 420px; }
+    .rw-planner input[type="range"] { width: 100%; accent-color: var(--rw-radium); cursor: pointer; }
+    .rw-grid { display: grid; grid-template-columns: ${gridCols}; ${gridJustify} gap: 20px; }
+    .rw-card { position: relative; background: var(--rw-card-bg); backdrop-filter: blur(22px); border: 1px solid var(--rw-card-border); border-radius: 28px; padding: 20px 16px 18px; box-shadow: var(--rw-card-shadow); display: flex; flex-direction: column; align-items: center; }
+    .rw-card::before { content: ''; position: absolute; top: 0; left: 24%; right: 24%; height: 2px; background: linear-gradient(90deg, transparent, var(--rw-radium), var(--rw-accent), transparent); }
+    .rw-card-head { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 4px; }
+    .rw-city { font-family: 'Space Grotesk', sans-serif; font-size: 0.92rem; font-weight: 700; }
+    .rw-tz { font-family: 'Orbitron', monospace; font-size: 0.62rem; color: var(--rw-muted); margin-top: 2px; }
+    .rw-badge { padding: 3px 8px; border-radius: 99px; font-size: 0.62rem; font-weight: 700; text-transform: uppercase; border: 1px solid; white-space: nowrap; }
+    .rw-bezel { position: relative; width: 224px; height: 224px; border-radius: 50%; background: var(--rw-bezel-bg); padding: 12px; border: 1.5px solid var(--rw-bezel-border); box-shadow: 0 14px 28px -6px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.22); display: flex; align-items: center; justify-content: center; margin: 12px 0 14px; }
+    .rw-dial { position: relative; width: 100%; height: 100%; border-radius: 50%; background: var(--rw-dial-bg); border: 1.5px solid var(--rw-card-border); box-shadow: var(--rw-dial-shadow); overflow: hidden; }
+    .rw-tick { position: absolute; top: 6px; left: 50%; width: 1.5px; height: 5px; background: var(--rw-tick-minor); transform-origin: 50% 92px; margin-left: -0.75px; }
+    .rw-tick.major { width: 3.5px; height: 11px; background: var(--rw-radium); margin-left: -1.75px; border-radius: 2px; box-shadow: 0 0 7px var(--rw-radium-glow); }
+    .rw-tick.cardinal { width: 5px; height: 13px; margin-left: -2.5px; background: var(--rw-radium); box-shadow: 0 0 10px var(--rw-radium-glow); }
+    .rw-brand { position: absolute; top: 36px; left: 50%; transform: translateX(-50%); font-family: 'Space Grotesk', sans-serif; font-size: 0.56rem; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; color: var(--rw-muted); white-space: nowrap; z-index: 2; }
+    .rw-brand span { color: var(--rw-accent); }
+    .rw-subdial { position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border-radius: 50%; background: var(--rw-subdial-bg); border: 1px solid var(--rw-bezel-border); display: ${state.showSubdials ? 'flex' : 'none'}; align-items: center; justify-content: center; z-index: 2; }
+    .rw-subdial.left { left: 22px; }
+    .rw-subdial.right { right: 22px; }
+    .rw-sub-label { position: absolute; bottom: 7px; font-family: 'Orbitron', monospace; font-size: 0.38rem; font-weight: 700; color: var(--rw-muted); }
+    .rw-sub-needle { position: absolute; bottom: 50%; left: 50%; width: 1.8px; height: 14px; margin-left: -0.9px; background: var(--rw-accent); border-radius: 2px; transform-origin: 50% 100%; }
+    .rw-subdial.right .rw-sub-needle { background: var(--rw-radium); }
+    .rw-sub-pin { width: 4px; height: 4px; border-radius: 50%; background: var(--rw-text); z-index: 2; }
+    .rw-needle { position: absolute; bottom: 50%; left: 50%; transform-origin: 50% 100%; pointer-events: none; }
+    .rw-needle.hour { width: 7px; height: 48px; margin-left: -3.5px; background: var(--rw-hand-casing); border-radius: 5px; padding: 2.5px 1.8px; display: flex; justify-content: center; z-index: 3; }
+    .rw-needle.hour::after { content: ''; width: 100%; height: 82%; background: var(--rw-radium); border-radius: 3px; box-shadow: 0 0 8px var(--rw-radium-glow); }
+    .rw-needle.minute { width: 5px; height: 70px; margin-left: -2.5px; background: var(--rw-hand-casing); border-radius: 5px; padding: 2.5px 1.2px; display: flex; justify-content: center; z-index: 4; }
+    .rw-needle.minute::after { content: ''; width: 100%; height: 86%; background: var(--rw-radium); border-radius: 3px; box-shadow: 0 0 10px var(--rw-radium-glow); }
+    .rw-needle.second { width: 2px; height: 92px; margin-left: -1px; bottom: calc(50% - 16px); transform-origin: 50% 76px; background: var(--rw-accent); box-shadow: 0 0 7px var(--rw-accent-glow); z-index: 5; }
+    .rw-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 12px; height: 12px; border-radius: 50%; background: var(--rw-accent); border: 2px solid var(--rw-hand-casing); z-index: 6; }
+    .rw-time { font-family: 'Orbitron', monospace; font-size: ${state.digitalStyle === 'hhmmss' ? '1.3rem' : '1.55rem'}; font-weight: 800; display: ${state.digitalStyle === 'analog' ? 'none' : 'flex'}; align-items: baseline; gap: 6px; margin-bottom: 6px; }
+    .rw-time .ampm { font-family: 'Space Grotesk', sans-serif; font-size: 0.72rem; font-weight: 700; color: var(--rw-accent); padding: 2px 6px; border-radius: 5px; background: var(--rw-pill-bg); }
+    .rw-date { display: ${state.showDatePill ? 'inline-flex' : 'none'}; align-items: center; gap: 6px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--rw-muted); padding: 4px 10px; border-radius: 99px; background: var(--rw-pill-bg); }
+    .rw-date .circle { background: var(--rw-circle-bg); color: var(--rw-circle-text); border-radius: 50%; height: 18px; width: 18px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.64rem; font-weight: 800; }
+    .rw-countdown { font-size: 0.68rem; font-weight: 600; color: var(--rw-muted); margin-top: 6px; }
+    .rw-footer { display: ${state.showEngagementBar ? 'flex' : 'none'}; flex-wrap: wrap; justify-content: space-between; gap: 12px; margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--rw-card-border); font-size: 0.76rem; color: var(--rw-muted); }
+  </style>
+</head>
+<body>
+  <section id="rwSection" class="rw-widget-section ${state.darkMode ? 'rw-dark' : ''}">
+    <div class="rw-wrap">
+      <div class="rw-header">
+        <div>
+          <div class="rw-notice"><span class="rw-dot"></span><span>${state.liveNotice}</span></div>
+          <h2 class="rw-title">${state.headerTitle}</h2>
+        </div>
+        <button id="rwThemeBtn" type="button" class="rw-btn">${state.darkMode ? '☀ Light Mode' : '☾ Dark Mode'}</button>
+      </div>
+      <div class="rw-planner">
+        <div><strong style="color:var(--rw-accent);">PLANNER:</strong> <span id="rwPlanText">Showing Live Real-Time</span></div>
+        <div class="rw-planner-controls">
+          <span>-12h</span>
+          <input id="rwPlanSlider" type="range" min="-720" max="720" step="15" value="0" />
+          <span>+12h</span>
+          <button id="rwPlanReset" type="button" class="rw-btn" style="padding:5px 10px;">Live</button>
+        </div>
+      </div>
+      <div id="rwGrid" class="rw-grid"></div>
+      <div class="rw-footer">
+        <div>Live Uptime: <strong id="rwUptime" style="color:var(--rw-text);">00m 00s</strong> • Active Zones: <strong style="color:var(--rw-text);">${selectedCities.length} Hubs</strong> • Hours: <strong style="color:var(--rw-accent);">${schedLabel}</strong></div>
+        <div>Powered by <strong style="color:var(--rw-accent);">${brandUpper}</strong></div>
+      </div>
+    </div>
+  </section>
+  <script>
+    (function() {
+      const CITIES = ${citiesJSON};
+      const SMOOTH_SWEEP = ${state.smoothSweep};
+      const USE_24H = ${state.use24Hour};
+      const DIGITAL_STYLE = '${state.digitalStyle}';
+      const OPEN_TIME = '${state.openTime}';
+      const CLOSE_TIME = '${state.closeTime}';
+      const WORK_DAYS = '${state.workDays}';
+      const OPEN_LABEL = '${state.openLabel}';
+      const CLOSED_LABEL = '${state.closedLabel}';
+      const RADIUM_COLOR = '${state.radiumColor}';
+      const RADIUM_BG = '${hexToRgba(state.radiumColor, 0.16)}';
+      const RADIUM_BD = '${hexToRgba(state.radiumColor, 0.45)}';
+      const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const WMAP = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+      const startTs = Date.now();
+      let offsetMin = 0;
+
+      const grid = document.getElementById('rwGrid');
+      const section = document.getElementById('rwSection');
+      const themeBtn = document.getElementById('rwThemeBtn');
+      const slider = document.getElementById('rwPlanSlider');
+      const planText = document.getElementById('rwPlanText');
+
+      themeBtn.addEventListener('click', () => {
+        const isDark = section.classList.toggle('rw-dark');
+        themeBtn.textContent = isDark ? '☀ Light Mode' : '☾ Dark Mode';
+      });
+
+      slider.addEventListener('input', e => {
+        offsetMin = Number(e.target.value);
+        if (offsetMin === 0) {
+          planText.textContent = 'Showing Live Real-Time';
+        } else {
+          const sign = offsetMin > 0 ? '+' : '-';
+          const abs = Math.abs(offsetMin);
+          planText.textContent = 'Time Shift: ' + sign + Math.floor(abs / 60) + 'h ' + (abs % 60) + 'm';
+        }
+      });
+      document.getElementById('rwPlanReset').addEventListener('click', () => {
+        offsetMin = 0;
+        slider.value = 0;
+        planText.textContent = 'Showing Live Real-Time';
+      });
+
+      let ticksHTML = '';
+      for (let i = 0; i < 60; i++) {
+        let c = 'rw-tick';
+        if (i % 5 === 0) c += ' major';
+        if (i % 15 === 0) c += ' cardinal';
+        ticksHTML += '<div class="' + c + '" style="transform: rotate(' + (i * 6) + 'deg);"></div>';
+      }
+
+      const refs = CITIES.map(city => {
+        const card = document.createElement('div');
+        card.className = 'rw-card';
+        card.innerHTML =
+          '<div class="rw-card-head">' +
+            '<div><div class="rw-city">' + city.label + '</div><div class="rw-tz">' + city.timeZone + '</div></div>' +
+            '<span class="rw-badge">OPEN</span>' +
+          '</div>' +
+          '<div class="rw-bezel"><div class="rw-dial">' +
+            ticksHTML +
+            '<div class="rw-brand">${dialBrandMarkup}</div>' +
+            '<div class="rw-subdial left"><div class="rw-sub-needle s24"></div><div class="rw-sub-pin"></div><span class="rw-sub-label">24H</span></div>' +
+            '<div class="rw-subdial right"><div class="rw-sub-needle sms"></div><div class="rw-sub-pin"></div><span class="rw-sub-label">1/10S</span></div>' +
+            '<div class="rw-needle hour"></div><div class="rw-needle minute"></div><div class="rw-needle second"></div><div class="rw-center"></div>' +
+          '</div></div>' +
+          '<div class="rw-time">12:00 <span class="ampm">PM</span></div>' +
+          '<div class="rw-date">Mon, Nov <span class="circle">26</span></div>' +
+          '<div class="rw-countdown"></div>';
+        grid.appendChild(card);
+        return {
+          tz: city.timeZone,
+          h: card.querySelector('.hour'),
+          m: card.querySelector('.minute'),
+          s: card.querySelector('.second'),
+          s24: card.querySelector('.s24'),
+          sms: card.querySelector('.sms'),
+          t: card.querySelector('.rw-time'),
+          d: card.querySelector('.rw-date'),
+          b: card.querySelector('.rw-badge'),
+          cd: card.querySelector('.rw-countdown'),
+          lt: '', ld: '', ls: ''
+        };
+      });
+
+      function parseMin(str, fb) {
+        const p = (str || '').split(':').map(Number);
+        return p.length === 2 && !isNaN(p[0]) ? p[0] * 60 + p[1] : fb;
+      }
+
+      function fmtDur(m) {
+        const t = Math.max(0, Math.round(m));
+        const h = Math.floor(t / 60), r = t % 60;
+        return h > 0 && r > 0 ? h + 'h ' + r + 'm' : (h > 0 ? h + 'h' : r + 'm');
+      }
+
+      function getParts(d, tz) {
+        try {
+          const parts = new Intl.DateTimeFormat('en-US', {
+            timeZone: tz, hourCycle: 'h23', month: 'numeric', day: 'numeric',
+            weekday: 'short', hour: 'numeric', minute: 'numeric', timeZoneName: 'shortOffset'
+          }).formatToParts(d);
+          const map = {};
+          parts.forEach(p => { map[p.type] = p.value; });
+          const w = map.weekday || DAYS[d.getDay()];
+          return {
+            h24: parseInt(map.hour, 10) % 24,
+            min: parseInt(map.minute, 10) || 0,
+            day: parseInt(map.day, 10) || d.getDate(),
+            mon: (parseInt(map.month, 10) || 1) - 1,
+            wStr: w,
+            wIdx: WMAP[w] ?? d.getDay(),
+            off: (map.timeZoneName || 'UTC').replace('GMT', 'UTC')
+          };
+        } catch (e) {
+          return { h24: d.getHours(), min: d.getMinutes(), day: d.getDate(), mon: d.getMonth(), wStr: DAYS[d.getDay()], wIdx: d.getDay(), off: 'UTC' };
+        }
+      }
+
+      function getStatus(zp) {
+        if (WORK_DAYS === '24x7') return { open: true, badge: OPEN_LABEL, cd: 'Always Active' };
+        const oM = parseMin(OPEN_TIME, 540), cM = parseMin(CLOSE_TIME, 1080), nM = zp.h24 * 60 + zp.min;
+        const okDay = d => WORK_DAYS === 'everyday' ? true : (WORK_DAYS === 'mon-sat' ? d >= 1 && d <= 6 : d >= 1 && d <= 5);
+        const todayOk = okDay(zp.wIdx);
+        const open = todayOk && (cM > oM ? (nM >= oM && nM < cM) : (nM >= oM || nM < cM));
+        if (open) {
+          const diff = cM > nM ? cM - nM : 1440 - nM + cM;
+          return { open: true, badge: OPEN_LABEL, cd: 'Closes in ' + fmtDur(diff) };
+        }
+        let wait = 0;
+        if (todayOk && nM < oM) wait = oM - nM;
+        else {
+          for (let i = 1; i <= 7; i++) {
+            if (okDay((zp.wIdx + i) % 7)) { wait = (1440 - nM) + (i - 1) * 1440 + oM; break; }
+          }
+        }
+        return { open: false, badge: CLOSED_LABEL, cd: wait > 0 ? 'Opens in ' + fmtDur(wait) : 'Opens at ' + OPEN_TIME };
+      }
+
+      function loop() {
+        try {
+          const now = new Date(Date.now() + offsetMin * 60000);
+          const ms = now.getMilliseconds();
+          const rawS = now.getSeconds();
+          const sec = SMOOTH_SWEEP ? rawS + ms / 1000 : rawS;
+          refs.forEach(r => {
+            const zp = getParts(now, r.tz);
+            const min = zp.min + sec / 60;
+            const hr = (zp.h24 % 12) + min / 60;
+            r.h.style.transform = 'rotate(' + (hr * 30) + 'deg)';
+            r.m.style.transform = 'rotate(' + (min * 6) + 'deg)';
+            r.s.style.transform = 'rotate(' + (sec * 6) + 'deg)';
+            r.s24.style.transform = 'rotate(' + (((zp.h24 + min / 60) / 24) * 360) + 'deg)';
+            r.sms.style.transform = 'rotate(' + ((ms / 1000) * 360) + 'deg)';
+            if (DIGITAL_STYLE !== 'analog') {
+              const mm = String(zp.min).padStart(2, '0');
+              const ss = DIGITAL_STYLE === 'hhmmss' ? ':' + String(rawS).padStart(2, '0') : '';
+              const tStr = USE_24H
+                ? String(zp.h24).padStart(2, '0') + ':' + mm + ss + ' <span class="ampm">24H</span>'
+                : (zp.h24 % 12 === 0 ? 12 : zp.h24 % 12) + ':' + mm + ss + ' <span class="ampm">' + (zp.h24 >= 12 ? 'PM' : 'AM') + '</span>';
+              if (r.lt !== tStr) { r.t.innerHTML = tStr; r.lt = tStr; }
+            }
+            const dStr = zp.wStr + ', ' + MONTHS[zp.mon] + ' <span class="circle">' + zp.day + '</span> <span style="opacity:0.75;font-size:0.62rem;">' + zp.off + '</span>';
+            if (r.ld !== dStr) { r.d.innerHTML = dStr; r.ld = dStr; }
+            const st = getStatus(zp);
+            const sk = st.open + '|' + st.badge + '|' + st.cd;
+            if (r.ls !== sk) {
+              r.b.textContent = st.badge;
+              r.cd.textContent = st.cd;
+              r.b.style.background = st.open ? RADIUM_BG : 'rgba(244,63,94,0.14)';
+              r.b.style.borderColor = st.open ? RADIUM_BD : 'rgba(244,63,94,0.35)';
+              r.b.style.color = st.open ? RADIUM_COLOR : '#fb7185';
+              r.ls = sk;
+            }
+          });
+          const el = Math.floor((Date.now() - startTs) / 1000);
+          const up = document.getElementById('rwUptime');
+          if (up) up.textContent = String(Math.floor(el / 60)).padStart(2, '0') + 'm ' + String(el % 60).padStart(2, '0') + 's';
+        } finally {
+          requestAnimationFrame(loop);
+        }
+      }
+      requestAnimationFrame(loop);
+    })();
+  ${'<'}/script>
+</body>
+</html>`;
+    }
+
+    function triggerDownload() {
+      const code = generateStandaloneHTML();
+      const slug = (state.brandName || 'radium-world-clock').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      const blob = new Blob([code], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${slug}-${state.watchCount}watch-widget.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast(`Downloaded ${slug}-${state.watchCount}watch-widget.html`);
+    }
+
+    // Generate Complete Markdown (.md) Product Guide & User Manual
+    function generateGuideMarkdown() {
+      const brand = (state.brandName || 'Radium World-Clock Studio').trim();
+      const activeCities = getActiveCities().map((c, i) => `${i + 1}. **${c.label}** (\`${c.timeZone}\`)`).join('\n');
+
+      return `# ${brand} — Radium World-Clock Studio User Guide & Playbook
+
+> **Welcome!** Please read this complete guide thoroughly to discover everything you can build, customize, and share using the **Radium World-Clock Studio & Widget Generator**.
+
+---
+
+## 1. Introduction
+
+**Radium World-Clock Studio** is a high-precision, zero-dependency world clock and horological widget studio built for websites, live broadcasts, global teams, agencies, and social media status creators.
+
+Each watch combines:
+- A **60-FPS sweeping analog chronograph** (or crisp 1-second Quartz tick)
+- Luminous radium hour/minute hands with customizable bezel finishes
+- Dedicated **24-Hour** and **1/10-Second** sub-dials
+- Synchronized **12-Hour (AM/PM)** or **24-Hour** digital readouts
+- Live **Open / Closed business-hour badges and countdowns**
+- A **1-Click Single-File HTML Exporter** that packages your entire setup into one self-contained \`.html\` file.
+
+---
+
+## 2. Core Features
+
+| Feature | What It Does |
+| :--- | :--- |
+| **1 to 8 Global Watches** | Display anywhere from **1 hero clock** up to **8 synchronized world clocks** with automatic responsive grid alignment. |
+| **Searchable Global Timezones** | Search across 80+ major cities (Bhopal, New Delhi, Mumbai, Dubai, London, New York, Tokyo, Sydney) plus every IANA timezone supported by your browser. |
+| **12H & 24H Digital Switcher** | Switch between \`12-Hour (AM/PM)\` and \`24-Hour (Intl)\` formats, or choose \`HH:MM\`, \`HH:MM:SS\`, or \`Analog Only\`. |
+| **Open / Close Timers & Countdowns** | Configure your local opening/closing hours and working schedule (\`Mon–Fri\`, \`Mon–Sat\`, \`Everyday\`, or \`24×7 Live\`) to display live countdowns like *"Closes in 2h 15m"*. |
+| **Interactive Meeting Planner** | Scrub the \`-12h\` to \`+12h\` time-shift slider to preview overlapping working hours across all selected cities before scheduling calls or streams. |
+| **Horology Presets & Custom Colors** | Apply 1-click luxury themes (*Radium*, *Gold*, *Arctic*, *Crimson*, *Ivory*) or pick custom hex colors and bezel finishes (*Obsidian Steel*, *Champagne Gold*, *Brushed Titanium*, *Emerald Carbon*). |
+| **Single-File .HTML Export** | Download a clean, standalone \`.html\` file with all CSS and JavaScript baked inline—no external servers, databases, or API keys required. |
+
+---
+
+## 3. Where & How You Can Use It (Use Cases)
+
+### A. Business Websites, Contact & Support Pages
+- Embed a **2-watch or 4-watch strip** on your Contact, Support, or About page so visitors immediately see your current local time and whether your team is **OPEN NOW** or **CLOSED**.
+- Great for IT consultancies, export/import businesses, customer support desks, and remote teams.
+
+### B. WhatsApp Status, Facebook Stories & Profile DPs
+- Click **Clean Status View** in the studio to hide the editor sidebar and showcase your branded clocks full-screen.
+- **For WhatsApp / Facebook Status:** Record a 10–15 second screen video showing the smooth sweeping second hand and your custom brand name on the dial.
+- **For Profile Pictures (DP):** Select **1 Watch**, customize your signature colors and brand name, enter **Clean Status View**, and capture a crisp square screenshot.
+
+### C. Live Streams, Webinars, Classes & Events
+- Update the **Live Broadcast / Community Notice** banner with your next stream or class time (e.g., *"Live Stream & Support Active • Next Event 7:00 PM IST"*).
+- Share the live widget or screen-share it during countdowns so international viewers know the exact local time.
+
+### D. Client Deliverables & Agency White-Labeling
+- Create custom-branded world clocks for clients in under 60 seconds—type their brand name, match their brand colors, download the single \`.html\` file, and hand it over ready to deploy.
+
+---
+
+## 4. Step-by-Step How-To Guide
+
+### Step 1: Customize Brand & Headline
+1. Open **Section 1 (Brand & Live Headline)** in the left customizer sidebar.
+2. Enter your **Dial Brand Name** (printed directly inside every watch dial).
+3. Update the **Section Headline** and **Live Broadcast / Community Notice**.
+
+### Step 2: Style Colors, Bezel & Theme
+1. In **Section 2**, click any luxury preset (*Radium*, *Gold*, *Arctic*, *Crimson*, *Ivory*) or use the color pickers for **Lume Hands** and **Second Hand**.
+2. Choose a **Bezel Case Finish** and select **Dark** or **Light** default mode.
+
+### Step 3: Set Time Format & Display Options
+1. In **Section 3**, select **12-Hour (AM/PM)** or **24-Hour (Intl)**.
+2. Choose your digital readout style: \`HH:MM\`, \`HH:MM:SS\`, or \`Analog Only\`.
+3. Pick **60FPS Sweep** (smooth mechanical motion) or **Quartz 1s Tick**.
+4. Toggle optional elements: *24H & 1/10S Dials*, *Date & UTC Pill*, *Meeting Planner*, and *Live Session Bar*.
+
+### Step 4: Configure Open / Close Timers
+1. In **Section 4**, set your **Open Time** and **Close Time** (in each city's local time).
+2. Choose your working days (\`Mon–Fri\`, \`Mon–Sat\`, \`Everyday\`, or \`24×7 Live\`) and customize the badge text (\`OPEN NOW\` / \`CLOSED\`).
+
+### Step 5: Pick 1 to 8 Watches & Search Cities
+1. In **Section 5**, click a number from **1** to **8** to choose how many watches appear in the grid and exported file.
+2. Edit any city's display label or click **Zone** to search by city, country, or IANA timezone.
+
+### Step 6: Download & Embed on Any Website
+1. Click **Download Single-File .HTML** at the bottom of the sidebar.
+2. **Option 1 (Standalone Page):** Upload the downloaded \`.html\` file to your web hosting, cPanel, Netlify, Vercel, or GitHub Pages.
+3. **Option 2 (Embed Inside an Existing Page):**
+   \`\`\`html
+   <iframe
+     src="your-watch-widget.html"
+     title="Global Live Clock"
+     style="width: 100%; min-height: 540px; border: 0; border-radius: 24px; overflow: hidden;"
+     loading="lazy">
+   </iframe>
+   \`\`\`
+4. **Option 3 (Direct Code Injection):** Click **View / Copy Code** and paste the \`<style>\`, \`<section id="rwSection">\`, and \`<script>\` blocks into any WordPress Custom HTML block, Webflow Embed, or Shopify section.
+
+---
+
+## 5. Current Active Configuration Snapshot
+
+- **Brand Name:** ${brand}
+- **Active Watch Count:** ${state.watchCount} ${state.watchCount === 1 ? 'Watch' : 'Watches'}
+- **Digital Format:** ${state.use24Hour ? '24-Hour' : '12-Hour (AM/PM)'} (${state.digitalStyle.toUpperCase()})
+- **Business Hours:** ${state.workDays === '24x7' ? '24×7 Live' : `${state.openTime} – ${state.closeTime} (${state.workDays})`}
+- **Configured Cities:**
+${activeCities}
+
+---
+
+## 6. Frequently Asked Questions (FAQ)
+
+**Q1: Does this widget need an internet API or subscription to keep accurate time?**  
+No. Time calculations use the browser's native \`Intl.DateTimeFormat\` engine, which automatically handles timezones and Daylight Saving Time (DST) shifts with zero external API keys or recurring fees.
+
+**Q2: Can I put this directly into a WhatsApp Status or Facebook Profile Picture?**  
+WhatsApp and Facebook accept images and videos rather than live HTML code. Use **Clean Status View** to capture a high-resolution screenshot (for your DP) or a short 10–15 second screen recording (for your WhatsApp Status or Facebook Story).
+
+**Q3: Will the exported HTML file work on mobile phones and tablets?**  
+Yes. The exported layout uses responsive CSS Grid so 1 to 8 watches automatically stack cleanly on mobile screens and expand into multi-column rows on tablets and desktops.
+
+**Q4: How do I change the watches later after downloading?**  
+Simply reopen **Radium World-Clock Studio**, adjust your cities, colors, or business hours, and click **Download Single-File .HTML** again to generate an updated file.
+`;
+    }
+
+    function triggerGuideDownload() {
+      const mdContent = generateGuideMarkdown();
+      const slug = (state.brandName || 'radium-world-clock').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      const blob = new Blob([mdContent], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${slug}-user-guide.md`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast(`Downloaded ${slug}-user-guide.md`);
+    }
+
+    // Wire Up Customizer Event Listeners
+    document.getElementById('brandNameInput').addEventListener('input', e => {
+      state.brandName = e.target.value;
+      syncVisualStyles();
+    });
+    document.getElementById('headerTitleInput').addEventListener('input', e => {
+      state.headerTitle = e.target.value;
+      syncVisualStyles();
+    });
+    document.getElementById('liveNoticeInput').addEventListener('input', e => {
+      state.liveNotice = e.target.value;
+      syncVisualStyles();
+    });
+    document.getElementById('radiumColorInput').addEventListener('input', e => {
+      state.radiumColor = e.target.value;
+      document.getElementById('radiumHexLabel').textContent = e.target.value.toUpperCase();
+      syncVisualStyles();
+    });
+    document.getElementById('accentColorInput').addEventListener('input', e => {
+      state.accentColor = e.target.value;
+      document.getElementById('accentHexLabel').textContent = e.target.value.toUpperCase();
+      syncVisualStyles();
+    });
+    document.getElementById('bezelSelect').addEventListener('change', e => {
+      state.bezel = e.target.value;
+      syncVisualStyles();
+    });
+
+    // Horology Presets
+    const PRESETS = {
+      radium: { radium: '#34d399', accent: '#38bdf8', bezel: 'obsidian', dark: true },
+      gold: { radium: '#fbbf24', accent: '#f59e0b', bezel: 'gold', dark: true },
+      arctic: { radium: '#38bdf8', accent: '#818cf8', bezel: 'titanium', dark: true },
+      crimson: { radium: '#fb7185', accent: '#f43f5e', bezel: 'obsidian', dark: true },
+      ivory: { radium: '#059669', accent: '#0284c7', bezel: 'titanium', dark: false }
+    };
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const p = PRESETS[btn.dataset.preset];
+        if (!p) return;
+        state.radiumColor = p.radium;
+        state.accentColor = p.accent;
+        state.bezel = p.bezel;
+        state.darkMode = p.dark;
+        document.getElementById('radiumColorInput').value = p.radium;
+        document.getElementById('radiumHexLabel').textContent = p.radium.toUpperCase();
+        document.getElementById('accentColorInput').value = p.accent;
+        document.getElementById('accentHexLabel').textContent = p.accent.toUpperCase();
+        document.getElementById('bezelSelect').value = p.bezel;
+        setDarkModeUI(p.dark);
+        syncVisualStyles();
+        showToast(`Applied ${btn.textContent} preset`);
+      });
+    });
+
+    function setDarkModeUI(isDark) {
+      state.darkMode = isDark;
+      const darkBtn = document.getElementById('modeDarkBtn');
+      const lightBtn = document.getElementById('modeLightBtn');
+      if (isDark) {
+        darkBtn.className = 'py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 transition cursor-pointer';
+        lightBtn.className = 'py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition cursor-pointer';
+      } else {
+        lightBtn.className = 'py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 transition cursor-pointer';
+        darkBtn.className = 'py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition cursor-pointer';
+      }
+      syncVisualStyles();
+    }
+
+    document.getElementById('modeDarkBtn').addEventListener('click', () => setDarkModeUI(true));
+    document.getElementById('modeLightBtn').addEventListener('click', () => setDarkModeUI(false));
+    document.getElementById('previewThemeToggle').addEventListener('click', () => setDarkModeUI(!state.darkMode));
+
+    // 12-Hour / 24-Hour Format Switcher
+    const fmt12Btn = document.getElementById('fmt12Btn');
+    const fmt24Btn = document.getElementById('fmt24Btn');
+    fmt12Btn.addEventListener('click', () => {
+      state.use24Hour = false;
+      fmt12Btn.className = 'py-2 px-3 rounded-xl text-xs font-semibold bg-sky-500/20 text-sky-300 border border-sky-500/40 transition cursor-pointer';
+      fmt24Btn.className = 'py-2 px-3 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 border border-slate-800 hover:text-white transition cursor-pointer';
+      syncVisualStyles();
+      updateAllClocks();
+    });
+    fmt24Btn.addEventListener('click', () => {
+      state.use24Hour = true;
+      fmt24Btn.className = 'py-2 px-3 rounded-xl text-xs font-semibold bg-sky-500/20 text-sky-300 border border-sky-500/40 transition cursor-pointer';
+      fmt12Btn.className = 'py-2 px-3 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 border border-slate-800 hover:text-white transition cursor-pointer';
+      syncVisualStyles();
+      updateAllClocks();
+    });
+
+    // Digital Readout Style Buttons
+    document.querySelectorAll('.dstyle-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.digitalStyle = btn.dataset.dstyle;
+        document.querySelectorAll('.dstyle-btn').forEach(b => {
+          const active = b.dataset.dstyle === state.digitalStyle;
+          b.className = active
+            ? 'dstyle-btn py-1.5 px-2 rounded-lg text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 transition cursor-pointer'
+            : 'dstyle-btn py-1.5 px-2 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white transition cursor-pointer';
+        });
+        syncVisualStyles();
+        updateAllClocks();
+      });
+    });
+
+    // Sweep vs Quartz Toggle
+    const sweepBtn = document.getElementById('sweepBtn');
+    const quartzBtn = document.getElementById('quartzBtn');
+    sweepBtn.addEventListener('click', () => {
+      state.smoothSweep = true;
+      sweepBtn.className = 'py-2 px-3 rounded-xl text-xs font-semibold bg-sky-500/20 text-sky-300 border border-sky-500/40 transition cursor-pointer';
+      quartzBtn.className = 'py-2 px-3 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 border border-slate-800 hover:text-white transition cursor-pointer';
+    });
+    quartzBtn.addEventListener('click', () => {
+      state.smoothSweep = false;
+      quartzBtn.className = 'py-2 px-3 rounded-xl text-xs font-semibold bg-sky-500/20 text-sky-300 border border-sky-500/40 transition cursor-pointer';
+      sweepBtn.className = 'py-2 px-3 rounded-xl text-xs font-semibold bg-slate-950 text-slate-400 border border-slate-800 hover:text-white transition cursor-pointer';
+    });
+
+    // Feature Checkboxes
+    document.getElementById('toggleSubdials').addEventListener('change', e => {
+      state.showSubdials = e.target.checked;
+      syncVisualStyles();
+    });
+    document.getElementById('toggleDatePill').addEventListener('change', e => {
+      state.showDatePill = e.target.checked;
+      syncVisualStyles();
+    });
+    document.getElementById('togglePlanner').addEventListener('change', e => {
+      state.showPlanner = e.target.checked;
+      syncVisualStyles();
+    });
+    document.getElementById('toggleEngagement').addEventListener('change', e => {
+      state.showEngagementBar = e.target.checked;
+      syncVisualStyles();
+    });
+
+    // Open / Close Hours Listeners
+    document.getElementById('openTimeInput').addEventListener('input', e => {
+      state.openTime = e.target.value || '09:00';
+      syncVisualStyles();
+      updateAllClocks();
+    });
+    document.getElementById('closeTimeInput').addEventListener('input', e => {
+      state.closeTime = e.target.value || '18:00';
+      syncVisualStyles();
+      updateAllClocks();
+    });
+    document.getElementById('workDaysSelect').addEventListener('change', e => {
+      state.workDays = e.target.value;
+      syncVisualStyles();
+      updateAllClocks();
+    });
+    document.getElementById('openLabelInput').addEventListener('input', e => {
+      state.openLabel = e.target.value || 'OPEN NOW';
+      syncVisualStyles();
+      updateAllClocks();
+    });
+    document.getElementById('closedLabelInput').addEventListener('input', e => {
+      state.closedLabel = e.target.value || 'CLOSED';
+      syncVisualStyles();
+      updateAllClocks();
+    });
+
+    // Meeting Planner Scrubber
+    const plannerSlider = document.getElementById('plannerSlider');
+    const plannerStatusText = document.getElementById('plannerStatusText');
+    plannerSlider.addEventListener('input', e => {
+      state.plannerOffsetMin = Number(e.target.value);
+      if (state.plannerOffsetMin === 0) {
+        plannerStatusText.textContent = 'Showing Live Real-Time';
+      } else {
+        const sign = state.plannerOffsetMin > 0 ? '+' : '-';
+        const abs = Math.abs(state.plannerOffsetMin);
+        plannerStatusText.textContent = `Simulated Time Shift: ${sign}${Math.floor(abs / 60)}h ${abs % 60}m`;
+      }
+      updateAllClocks();
+    });
+    document.getElementById('plannerResetBtn').addEventListener('click', () => {
+      state.plannerOffsetMin = 0;
+      plannerSlider.value = 0;
+      plannerStatusText.textContent = 'Showing Live Real-Time';
+      updateAllClocks();
+    });
+
+    // Watch Count Selector (1 to 8)
+    document.querySelectorAll('.watch-count-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const count = Number(btn.dataset.count);
+        if (!count || count < 1 || count > state.cities.length) return;
+        state.watchCount = count;
+        document.querySelectorAll('.watch-count-btn').forEach(b => {
+          const isActive = Number(b.dataset.count) === count;
+          b.className = isActive
+            ? 'watch-count-btn py-1.5 px-2 rounded-lg text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 transition cursor-pointer'
+            : 'watch-count-btn py-1.5 px-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition cursor-pointer';
+        });
+        renderCityControls();
+        renderClockGrid();
+        syncVisualStyles();
+        updateAllClocks();
+        showToast(`Configured ${count} ${count === 1 ? 'watch' : 'watches'} for preview & export`);
+      });
+    });
+
+    // Timezone Search Modal Listeners
+    document.getElementById('tzSearchInput').addEventListener('input', e => {
+      renderTimezoneSearchResults(e.target.value);
+    });
+    document.getElementById('closeTzModalBtn').addEventListener('click', closeTimezoneModal);
+    document.getElementById('tzModal').addEventListener('click', e => {
+      if (e.target.id === 'tzModal') closeTimezoneModal();
+    });
+
+    // Help & User Guide Modal + Markdown Download Listeners
+    const helpGuideModal = document.getElementById('helpGuideModal');
+    function openHelpGuide() {
+      helpGuideModal.classList.remove('hidden');
+      helpGuideModal.classList.add('flex');
+    }
+    function closeHelpGuide() {
+      helpGuideModal.classList.add('hidden');
+      helpGuideModal.classList.remove('flex');
+    }
+    document.getElementById('openHelpGuideBtn').addEventListener('click', openHelpGuide);
+    document.getElementById('previewGuideBtn').addEventListener('click', openHelpGuide);
+    document.getElementById('closeHelpGuideBtn').addEventListener('click', closeHelpGuide);
+    helpGuideModal.addEventListener('click', e => {
+      if (e.target.id === 'helpGuideModal') closeHelpGuide();
+    });
+    document.getElementById('downloadGuideMdBtn').addEventListener('click', triggerGuideDownload);
+    document.getElementById('bottomDownloadGuideBtn').addEventListener('click', triggerGuideDownload);
+    document.getElementById('footerDownloadGuideBtn').addEventListener('click', triggerGuideDownload);
+
+    // Export, Code Modal, Clean Status View & Reset
+    document.getElementById('downloadHtmlBtn').addEventListener('click', triggerDownload);
+    document.getElementById('modalDownloadBtn').addEventListener('click', triggerDownload);
+
+    document.getElementById('viewCodeBtn').addEventListener('click', () => {
+      document.getElementById('generatedCodeBox').value = generateStandaloneHTML();
+      const modal = document.getElementById('codeModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    });
+    document.getElementById('closeCodeModalBtn').addEventListener('click', () => {
+      const modal = document.getElementById('codeModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    });
+    document.getElementById('copyCodeBtn').addEventListener('click', () => {
+      const box = document.getElementById('generatedCodeBox');
+      box.select();
+      document.execCommand('copy');
+      showToast('Complete HTML code copied to clipboard!');
+    });
+
+    const asidePanel = document.querySelector('aside');
+    const exitCleanBtn = document.getElementById('exitCleanViewBtn');
+    document.getElementById('quickSnapshotBtn').addEventListener('click', () => {
+      asidePanel.classList.add('hidden');
+      exitCleanBtn.classList.remove('hidden');
+      showToast('Clean Status View active — great for screen recording!');
+    });
+    exitCleanBtn.addEventListener('click', () => {
+      asidePanel.classList.remove('hidden');
+      exitCleanBtn.classList.add('hidden');
+    });
+
+    document.getElementById('resetDefaultsBtn').addEventListener('click', () => {
+      window.location.reload();
+    });
+
+    // Initialize Studio Immediately
+    renderCityControls();
+    renderClockGrid();
+    syncVisualStyles();
+    updateAllClocks();
+    requestAnimationFrame(tickLoop);
+  </script>
+</body>
+</html>
