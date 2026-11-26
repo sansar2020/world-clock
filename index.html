@@ -998,9 +998,10 @@
           <label for="leadPhoneInput" class="block text-xs font-semibold text-slate-200 mb-1">
             WhatsApp / Mobile Number <span class="text-slate-400 font-normal">(Optional)</span>
           </label>
-          <input id="leadPhoneInput" name="phone" type="tel" maxlength="25"
-            placeholder="+91 98765 43210 — for direct mobile templates & quick tips"
+          <input id="leadPhoneInput" name="phone" type="tel" maxlength="20"
+            placeholder="+91 98765 43210 — 10–15 digits if provided"
             class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400 transition" />
+          <p id="leadPhoneError" class="hidden text-[11px] text-rose-400 mt-1 font-medium"></p>
         </div>
 
         <label class="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 cursor-pointer text-[11px] text-slate-300 leading-snug">
@@ -1033,7 +1034,6 @@
     // =========================================================================
     //const GOOGLE_SHEETS_WEBAPP_URL = 'PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEBAPP_URL_HERE';
     const GOOGLE_SHEETS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbz1vMMH7ZVU6jXq8f6W3_DTfv7ca2iSYPuV0600JgJop7vkVRg_sqNnlhpkPdi7PtZKYA/exec';
-    
     const LEAD_STORAGE_KEY = 'worldsathi_clock_unlocked_v1';
 
     // Rich Global City Directory for Instant Search
@@ -2482,10 +2482,27 @@ Simply reopen **Radium World-Clock Studio**, adjust your cities, colors, or busi
       e.preventDefault();
       const name = document.getElementById('leadNameInput').value.trim();
       const email = document.getElementById('leadEmailInput').value.trim();
-      const phone = document.getElementById('leadPhoneInput').value.trim();
+      const rawPhone = document.getElementById('leadPhoneInput').value.trim();
+      const phoneErrorEl = document.getElementById('leadPhoneError');
       const updatesOptIn = document.getElementById('leadConsentCheck').checked ? 'Yes' : 'No';
 
       if (!name || !email) return;
+
+      // Validate optional phone number: reject letters, <10 digits, >15 digits, or repeated dummy digits
+      let validatedPhone = '';
+      if (rawPhone) {
+        const cleaned = rawPhone.replace(/[\s\-().]/g, '');
+        const digitsOnly = cleaned.replace(/^\+/, '');
+        const isValidFormat = /^\+?[1-9]\d{9,14}$/.test(cleaned) && !/^(\d)\1{6,}$/.test(digitsOnly);
+        if (!isValidFormat) {
+          phoneErrorEl.textContent = 'Please enter a valid 10–15 digit mobile/WhatsApp number (or leave blank).';
+          phoneErrorEl.classList.remove('hidden');
+          document.getElementById('leadPhoneInput').focus();
+          return;
+        }
+        validatedPhone = cleaned;
+      }
+      phoneErrorEl.classList.add('hidden');
 
       const submitBtn = document.getElementById('leadSubmitBtn');
       const submitText = document.getElementById('leadSubmitText');
@@ -2497,7 +2514,7 @@ Simply reopen **Radium World-Clock Studio**, adjust your cities, colors, or busi
         timestamp: new Date().toISOString(),
         name,
         email,
-        phone: phone || 'Not provided',
+        phone: validatedPhone || 'Not provided',
         updatesOptIn,
         brandCustomized: state.brandName || 'WORLD SATHI',
         watchCount: state.watchCount,
@@ -2509,7 +2526,7 @@ Simply reopen **Radium World-Clock Studio**, adjust your cities, colors, or busi
         localStorage.setItem(LEAD_STORAGE_KEY, JSON.stringify({
           name,
           email,
-          phone,
+          phone: validatedPhone,
           unlockedAt: payload.timestamp
         }));
       } catch (err) {}
