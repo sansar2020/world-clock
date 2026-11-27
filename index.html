@@ -113,8 +113,8 @@
     .rw-card {
       position: relative;
       background: var(--rw-card-bg);
-      backdrop-filter: blur(22px) saturate(160%);
       -webkit-backdrop-filter: blur(22px) saturate(160%);
+      backdrop-filter: blur(22px) saturate(160%);
       border: 1px solid var(--rw-card-border);
       border-radius: 28px;
       padding: 20px 16px 18px;
@@ -456,6 +456,16 @@
       font-size: 0.64rem;
       font-weight: 800;
     }
+
+    .rw-ambient-glow {
+      background: radial-gradient(circle, rgba(52, 211, 153, 0.35) 0%, rgba(56, 189, 248, 0.25) 45%, transparent 70%);
+    }
+    .rw-status-dot {
+      background: var(--rw-radium);
+    }
+    .rw-accent-text {
+      color: var(--rw-accent);
+    }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col overflow-x-hidden">
@@ -574,7 +584,7 @@
                 <span class="block text-xs font-medium text-slate-300">Lume Hands</span>
                 <span id="radiumHexLabel" class="text-[11px] font-mono text-slate-400">#34D399</span>
               </div>
-              <input id="radiumColorInput" type="color" value="#34d399" class="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0" />
+              <input id="radiumColorInput" type="color" value="#34d399" aria-label="Lume Hands Color" title="Choose Lume Hands Color" class="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0" />
             </div>
 
             <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
@@ -582,14 +592,14 @@
                 <span class="block text-xs font-medium text-slate-300">Second Hand</span>
                 <span id="accentHexLabel" class="text-[11px] font-mono text-slate-400">#38BDF8</span>
               </div>
-              <input id="accentColorInput" type="color" value="#38bdf8" class="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0" />
+              <input id="accentColorInput" type="color" value="#38bdf8" aria-label="Second Hand Color" title="Choose Second Hand Color" class="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0" />
             </div>
           </div>
 
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label for="bezelSelect" class="block text-xs font-medium text-slate-300 mb-1">Bezel Case Finish</label>
-              <select id="bezelSelect" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700/80 text-xs text-white focus:outline-none focus:border-emerald-400">
+              <select id="bezelSelect" title="Select Bezel Case Finish" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700/80 text-xs text-white focus:outline-none focus:border-emerald-400">
                 <option value="obsidian">Obsidian Steel</option>
                 <option value="gold">Champagne Gold</option>
                 <option value="titanium">Brushed Titanium</option>
@@ -690,7 +700,7 @@
           <div class="grid grid-cols-3 gap-2">
             <div>
               <label for="workDaysSelect" class="block text-[11px] font-medium text-slate-300 mb-1">Schedule</label>
-              <select id="workDaysSelect" class="w-full px-2 py-2 rounded-xl bg-slate-950 border border-slate-700/80 text-xs text-white focus:outline-none focus:border-emerald-400">
+              <select id="workDaysSelect" title="Select Business Days Schedule" class="w-full px-2 py-2 rounded-xl bg-slate-950 border border-slate-700/80 text-xs text-white focus:outline-none focus:border-emerald-400">
                 <option value="mon-fri">Mon–Fri</option>
                 <option value="mon-sat">Mon–Sat</option>
                 <option value="everyday">Everyday</option>
@@ -771,15 +781,14 @@
     <main id="previewRoot" data-bezel="obsidian" data-watch-size="standard" class="order-1 lg:order-2 rw-dark flex-1 min-h-[calc(100vh-50px)] p-4 sm:p-8 lg:p-10 flex flex-col justify-between relative overflow-hidden">
 
       <!-- Ambient Glow -->
-      <div id="ambientGlow" class="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-[620px] h-[620px] rounded-full opacity-35 blur-3xl transition-all duration-500"
-        style="background: radial-gradient(circle, #34d399 0%, #38bdf8 45%, transparent 70%);"></div>
+      <div id="ambientGlow" class="rw-ambient-glow pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-[620px] h-[620px] rounded-full opacity-35 blur-3xl transition-all duration-500"></div>
 
       <!-- Top Live Status & Theme Switcher Bar -->
       <header class="relative z-10 max-w-6xl w-full mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-2 border"
             style="background: var(--rw-pill-bg); border-color: var(--rw-card-border); color: var(--rw-accent);">
-            <span class="w-2 h-2 rounded-full animate-pulse" style="background: var(--rw-radium);"></span>
+            <span class="rw-status-dot w-2 h-2 rounded-full animate-pulse"></span>
             <span id="previewLiveNotice">Live Stream & Support Active • Next Event 7:00 PM IST</span>
           </div>
           <h2 id="previewHeaderTitle" class="font-display font-extrabold text-2xl sm:text-3xl tracking-tight">
@@ -814,12 +823,12 @@
       <div id="plannerBar" class="relative z-10 max-w-6xl w-full mx-auto mb-6 px-4 py-3 rounded-2xl border backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-3"
         style="background: var(--rw-card-bg); border-color: var(--rw-card-border);">
         <div class="flex items-center gap-2.5 text-xs">
-          <span class="px-2 py-0.5 rounded-md font-mono font-bold text-[11px]" style="background: var(--rw-pill-bg); color: var(--rw-accent);">PLANNER</span>
+          <span class="rw-accent-text px-2 py-0.5 rounded-md font-mono font-bold text-[11px]" style="background: var(--rw-pill-bg);">PLANNER</span>
           <span id="plannerStatusText" class="font-semibold">Showing Live Real-Time</span>
         </div>
         <div class="flex items-center gap-3 flex-1 max-w-md">
           <span class="text-[11px] font-mono opacity-70">-12h</span>
-          <input id="plannerSlider" type="range" min="-720" max="720" step="15" value="0" class="w-full accent-emerald-400 cursor-pointer" />
+          <input id="plannerSlider" type="range" min="-720" max="720" step="15" value="0" aria-label="Meeting Planner Time Shift" title="Shift time from -12h to +12h" class="w-full accent-emerald-400 cursor-pointer" />
           <span class="text-[11px] font-mono opacity-70">+12h</span>
           <button id="plannerResetBtn" type="button" class="px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wider border cursor-pointer shrink-0"
             style="background: var(--rw-pill-bg); border-color: var(--rw-card-border); color: var(--rw-radium);">
@@ -838,20 +847,20 @@
         style="border-color: var(--rw-card-border); color: var(--rw-muted);">
         <div class="flex flex-wrap items-center gap-4">
           <span class="inline-flex items-center gap-1.5 font-medium">
-            <span class="w-2 h-2 rounded-full" style="background: var(--rw-radium);"></span>
+            <span class="rw-status-dot w-2 h-2 rounded-full"></span>
             Live Watch Uptime: <strong id="uptimeDisplay" class="font-mono" style="color: var(--rw-text);">00m 00s</strong>
           </span>
           <span class="hidden sm:inline opacity-40">|</span>
           <span>Active Zones: <strong id="hubCountDisplay" style="color: var(--rw-text);">4 Hubs</strong></span>
           <span class="hidden sm:inline opacity-40">|</span>
-          <span>Hours: <strong id="hoursSummaryDisplay" style="color: var(--rw-accent);">09:00–18:00 (Mon–Fri)</strong></span>
+          <span>Hours: <strong id="hoursSummaryDisplay" class="rw-accent-text">09:00–18:00 (Mon–Fri)</strong></span>
         </div>
         <div class="flex items-center gap-3 font-display font-semibold tracking-wide">
           <button id="footerDownloadGuideBtn" type="button" class="underline decoration-dotted hover:opacity-80 cursor-pointer" style="color: var(--rw-radium);">
             Download User Manual (.md)
           </button>
           <span class="opacity-40">•</span>
-          <span>Powered by <span id="footerBrandLabel" style="color: var(--rw-accent);">WORLD SATHI</span></span>
+          <span>Powered by <span id="footerBrandLabel" class="rw-accent-text">WORLD SATHI</span></span>
         </div>
       </footer>
     </main>
@@ -1113,7 +1122,7 @@
               ↻ Switch Style
             </button>
           </div>
-          <textarea id="shareCaptionBox" rows="4" class="w-full p-3 rounded-xl bg-slate-950 border border-slate-700 text-xs sm:text-sm text-slate-100 leading-relaxed focus:outline-none focus:border-emerald-400"></textarea>
+          <textarea id="shareCaptionBox" rows="4" title="Editable Friendly Challenge Caption" class="w-full p-3 rounded-xl bg-slate-950 border border-slate-700 text-xs sm:text-sm text-slate-100 leading-relaxed focus:outline-none focus:border-emerald-400"></textarea>
           <p class="text-[11px] text-slate-400">
             Tip: Download the PNG image below, then paste this caption when posting on WhatsApp Status, Facebook, LinkedIn, or YouTube!
           </p>
@@ -1150,6 +1159,7 @@
     // =========================================================================
     //const GOOGLE_SHEETS_WEBAPP_URL = 'PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEBAPP_URL_HERE';
     const GOOGLE_SHEETS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyJEozlHidRUzBNHX7zPHLqAr5p4ZOD3U2aRfRznAPdT67ExeR4JKpLmCnbgNxthUiiPg/exec';
+    
     const LEAD_STORAGE_KEY = 'worldsathi_clock_unlocked_v1';
 
     const CURATED_CITIES = [
@@ -1477,6 +1487,8 @@
       });
 
       container.querySelectorAll('.city-label-input').forEach(inp => {
+        inp.setAttribute('aria-label', `Watch ${Number(inp.dataset.idx) + 1} City Label`);
+        inp.setAttribute('title', `Edit label for Watch #${Number(inp.dataset.idx) + 1}`);
         inp.addEventListener('input', e => {
           const i = Number(e.target.dataset.idx);
           state.cities[i].label = e.target.value || 'City';
